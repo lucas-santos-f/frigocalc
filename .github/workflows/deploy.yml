@@ -1,0 +1,43 @@
+name: Deploy Cloudflare Pages
+
+# Publica no Cloudflare Pages a cada push na main.
+# Requer os segredos CLOUDFLARE_API_TOKEN (permissão "Cloudflare Pages: Edit") e CLOUDFLARE_ACCOUNT_ID
+# cadastrados em Settings > Secrets and variables > Actions. Sem eles o job é pulado.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build e publicação
+    runs-on: ubuntu-latest
+    if: ${{ vars.CF_DEPLOY_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci --no-fund --no-audit
+      - run: npm run build
+
+      - name: Publicar (wrangler pages deploy)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=frigocalc --branch=main

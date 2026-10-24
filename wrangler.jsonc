@@ -1,0 +1,7 @@
+{
+  // Cloudflare Pages — publicação por upload direto (npm run deploy) ou via GitHub Actions.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "frigocalc",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-10-01"
+}

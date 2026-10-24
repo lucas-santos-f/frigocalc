@@ -1,0 +1,30 @@
+# dependências e build
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+
+# segredos e ambiente — NUNCA versionar
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.wrangler/
+.dev.vars
+
+# editores / SO
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# python (gerador de tabelas)
+__pycache__/
+*.pyc
+.venv/
+venv/
