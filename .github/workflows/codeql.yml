@@ -14,6 +14,8 @@ permissions:
 jobs:
   analyze:
     name: Análise estática (${{ matrix.language }})
+    # Code scanning só está disponível em repositório público no plano gratuito
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
       security-events: write

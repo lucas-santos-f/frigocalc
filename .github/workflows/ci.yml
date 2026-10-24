@@ -43,7 +43,8 @@ jobs:
         run: npm run build
 
       - name: Auditoria de dependências (alta/crítica)
-        run: npm audit --audit-level=high
+        # Só dependências que vão para o site publicado (ferramentas de desenvolvimento não são distribuídas)
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Publicar artefato do build
         uses: actions/upload-artifact@v4
@@ -60,6 +61,10 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: gitleaks/gitleaks-action@v2
+      - name: Gitleaks (histórico completo)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: 8.28.0
+        run: |
+          curl -sSfL -o gl.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf gl.tgz gitleaks
+          ./gitleaks git --redact --no-banner --exit-code 1 .
