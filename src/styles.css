@@ -166,8 +166,13 @@ a {
 .scenario-bar .grow {
   flex: 1 1 220px;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  min-width: 0;
+}
+.scenario-bar .grow select {
+  flex: 1 1 160px;
   min-width: 0;
 }
 .scenario-bar input[type='text'] {
@@ -175,7 +180,10 @@ a {
   min-width: 0;
 }
 .scenario-bar select {
-  max-width: 240px;
+  max-width: 100%;
+}
+select {
+  max-width: 100%;
 }
 .btn-row {
   display: flex;
@@ -234,6 +242,22 @@ a {
   }
   .main {
     padding: 10px;
+  }
+}
+@media (max-width: 520px) {
+  .grid,
+  .grid.wide,
+  .fields {
+    grid-template-columns: 1fr;
+  }
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .card {
+    padding: 12px;
+  }
+  .list-item header {
+    flex-wrap: wrap;
   }
 }
 
