@@ -9,6 +9,10 @@ updates:
     groups:
       npm-all:
         patterns: ['*']
+    # Versões major mudam APIs e quebram o build: atualizar manualmente.
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
     schedule:
