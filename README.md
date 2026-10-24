@@ -14,7 +14,7 @@ Aplicação **100 % estática**: todo o cálculo roda no navegador, nada é envi
 
 ## Stack
 
-React 19 + TypeScript + Vite · ECharts · Zustand · Zod · Vitest · Cloudflare Pages.
+React 19 + TypeScript + Vite · ECharts · Zustand · Zod · Vitest · Cloudflare Workers (Static Assets).
 
 ## Como rodar
 
@@ -42,7 +42,7 @@ python tools/gen_tables.py
 | `src\state\` | Estado (Zustand + persistência) e validação (Zod) |
 | `src\i18n\` | Textos PT-BR / EN |
 | `tools\gen_tables.py` | Gerador das tabelas |
-| `public\_headers` | Cabeçalhos de segurança (CSP, HSTS etc.) para o Cloudflare Pages |
+| `public\_headers` | Cabeçalhos de segurança (CSP, HSTS etc.) para o Cloudflare |
 
 ## Segurança
 
@@ -50,7 +50,7 @@ Ver `SECURITY.md`: CSP estrita sem scripts externos, validação de toda entrada
 
 ## Publicação
 
-Cloudflare Pages (upload direto): `npm run deploy`. Via GitHub Actions: cadastrar `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` em *Secrets* e a variável `CF_DEPLOY_ENABLED=true` em *Variables*.
+Cloudflare Workers Static Assets (upload direto): `npm run deploy`. Via GitHub Actions: cadastrar `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` em *Secrets* e a variável `CF_DEPLOY_ENABLED=true` em *Variables*.
 
 ## Aviso
 

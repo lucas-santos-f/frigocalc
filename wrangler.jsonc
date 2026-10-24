@@ -1,7 +1,13 @@
 {
-  // Cloudflare Pages — publicação por upload direto (npm run deploy) ou via GitHub Actions.
+  // Cloudflare Workers (Static Assets) — publicação por `npm run deploy` ou via GitHub Actions.
+  // O arquivo public/_headers é respeitado pelos Static Assets (CSP, HSTS etc.).
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "frigocalc",
-  "pages_build_output_dir": "./dist",
-  "compatibility_date": "2026-10-01"
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+    "html_handling": "auto-trailing-slash"
+  },
+  "observability": { "enabled": false }
 }

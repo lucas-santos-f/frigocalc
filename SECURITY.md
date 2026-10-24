@@ -9,7 +9,7 @@ Superfícies relevantes:
 - Conteúdo de terceiros injetado por link de compartilhamento (`#s=...`) → sempre validado com esquema estrito (zod) antes de ser usado; nunca executado.
 - Arquivos JSON importados pelo usuário → mesma validação; limite de tamanho; nada é interpretado como código.
 - Cadeia de dependências (npm) → versões travadas por lockfile, `npm audit` no CI, Dependabot semanal, CodeQL.
-- Hospedagem (Cloudflare Pages) → HTTPS obrigatório, HSTS, CSP estrita sem `unsafe-eval` e sem scripts externos, `frame-ancestors 'none'` (ver `public/_headers`).
+- Hospedagem (Cloudflare Workers Static Assets) → HTTPS obrigatório, HSTS, CSP estrita sem `unsafe-eval` e sem scripts externos, `frame-ancestors 'none'` (ver `public/_headers`).
 
 ## Controles implementados
 

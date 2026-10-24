@@ -17,7 +17,7 @@
     "test:watch": "vitest",
     "audit": "npm audit --audit-level=high",
     "tables": "python tools/gen_tables.py",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name=frigocalc"
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "echarts": "^6.0.0",

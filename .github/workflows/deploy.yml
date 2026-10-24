@@ -1,7 +1,7 @@
-name: Deploy Cloudflare Pages
+name: Deploy Cloudflare
 
-# Publica no Cloudflare Pages a cada push na main.
-# Requer os segredos CLOUDFLARE_API_TOKEN (permissão "Cloudflare Pages: Edit") e CLOUDFLARE_ACCOUNT_ID
+# Publica no Cloudflare (Workers Static Assets) a cada push na main.
+# Requer os segredos CLOUDFLARE_API_TOKEN (permissão "Workers Scripts: Edit") e CLOUDFLARE_ACCOUNT_ID
 # cadastrados em Settings > Secrets and variables > Actions. Sem eles o job é pulado.
 
 on:
@@ -35,9 +35,9 @@ jobs:
       - run: npm ci --no-fund --no-audit
       - run: npm run build
 
-      - name: Publicar (wrangler pages deploy)
+      - name: Publicar (wrangler deploy)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=frigocalc --branch=main
+          command: deploy
