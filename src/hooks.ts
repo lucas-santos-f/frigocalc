@@ -21,9 +21,9 @@ export function useUnits() {
   return useMemo(
     () => ({
       sys,
-      /** valor formatado + unidade */
+      // converted value with its unit label
       show: (q: Quantity, v: number, digits = 1) => `${fmt(toDisplay(q, v, sys), digits, lang)} ${unitLabel(q, sys)}`,
-      /** só o número convertido */
+      // converted value only
       val: (q: Quantity, v: number, digits = 1) => fmt(toDisplay(q, v, sys), digits, lang),
       label: (q: Quantity) => unitLabel(q, sys),
       n: (v: number, digits = 1) => fmt(v, digits, lang),
@@ -37,7 +37,7 @@ interface FluidsState {
   error: string | null
 }
 
-/** Carrega (preguiçosamente) as tabelas dos fluidos pedidos. */
+// Loads the property tables for the requested refrigerants on demand.
 export function useFluids(ids: string[]): FluidsState {
   const key = ids.slice().sort().join('|')
   const [state, setState] = useState<FluidsState>({ fluids: null, error: null })
@@ -87,25 +87,17 @@ export function useComputed(sc: Scenario): Computed {
   }, [sc, fluids, error])
 }
 
-/** Tema atual (claro/escuro) para gráficos. */
+// Charts re-render with matching colors when the theme changes.
 export function useTheme(): 'light' | 'dark' {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => currentTheme())
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const update = () => setTheme(currentTheme())
-    mq.addEventListener('change', update)
-    const obs = new MutationObserver(update)
+    const obs = new MutationObserver(() => setTheme(currentTheme()))
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-    return () => {
-      mq.removeEventListener('change', update)
-      obs.disconnect()
-    }
+    return () => obs.disconnect()
   }, [])
   return theme
 }
 
 export function currentTheme(): 'light' | 'dark' {
-  const attr = document.documentElement.getAttribute('data-theme')
-  if (attr === 'dark' || attr === 'light') return attr
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
 }

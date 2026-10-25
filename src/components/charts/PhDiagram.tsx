@@ -27,7 +27,7 @@ export function PhDiagram({ fluid, cycle, title }: { fluid: Fluid; cycle: CycleR
     const cx = (h: number) => toDisplay('enthalpy', h, sys)
     const cy = (P: number) => toDisplay('pressure', P, sys)
 
-    // isotermas a cada 20 K dentro da janela
+    // isotherms every 20 K inside the visible window
     const Tlo = Math.floor((fluid.tDew(Math.max(Pmin, fluid.PminSat)) - K0) / 20) * 20
     const Thi = Math.ceil((Math.max(...pts.map((p) => p.T)) - K0 + 20) / 20) * 20
     const isoSeries: object[] = []
@@ -60,12 +60,12 @@ export function PhDiagram({ fluid, cycle, title }: { fluid: Fluid; cycle: CycleR
         formatter: (p: { seriesName: string; data: { value: number[]; name?: string; T?: number; x?: number } }) => {
           if (!p.data || !Array.isArray(p.data.value)) return ''
           const [h, P] = p.data.value
-          const extra = p.data.T !== undefined ? `<br/>T = ${p.data.T.toFixed(1)} °C${p.data.x !== undefined && p.data.x < 1 ? ` · x = ${p.data.x.toFixed(2)}` : ''}` : ''
+          const extra = p.data.T !== undefined ? `<br/>T = ${toDisplay('temp', p.data.T, sys).toFixed(1)} ${unitLabel('temp', sys)}${p.data.x !== undefined && p.data.x < 1 ? ` · x = ${p.data.x.toFixed(2)}` : ''}` : ''
           return `<b>${p.data.name ?? p.seriesName}</b><br/>h = ${h.toFixed(1)} ${unitLabel('enthalpy', sys)}<br/>P = ${P.toFixed(2)} ${unitLabel('pressure', sys)}${extra}`
         },
       },
-      xAxis: { type: 'value', name: `${t('cyc.ph_x')} (${unitLabel('enthalpy', sys)})`, nameLocation: 'middle', nameGap: 28, min: cx(hMin), max: cx(hMax), axisLine: { lineStyle: { color: c.grid } }, splitLine: { lineStyle: { color: c.grid, opacity: 0.5 } }, axisLabel: { color: c.muted } },
-      yAxis: { type: 'log', name: `${t('cyc.ph_y')} (${unitLabel('pressure', sys)})`, min: cy(Pmin), max: cy(Pmax), axisLine: { lineStyle: { color: c.grid } }, splitLine: { lineStyle: { color: c.grid, opacity: 0.5 } }, axisLabel: { color: c.muted, formatter: (v: number) => (v >= 10 ? v.toFixed(0) : v.toFixed(1)) } },
+      xAxis: { type: 'value', name: `${t('cyc.ph_x')} (${unitLabel('enthalpy', sys)})`, nameLocation: 'middle', nameGap: 28, min: Math.floor(cx(hMin) / 20) * 20, max: Math.ceil(cx(hMax) / 20) * 20, axisLine: { lineStyle: { color: c.grid } }, splitLine: { lineStyle: { color: c.grid, type: 'dashed' } }, axisLabel: { color: c.muted } },
+      yAxis: { type: 'log', name: `${t('cyc.ph_y')} (${unitLabel('pressure', sys)})`, min: cy(Pmin), max: cy(Pmax), axisLine: { lineStyle: { color: c.grid } }, splitLine: { lineStyle: { color: c.grid, type: 'dashed' } }, axisLabel: { color: c.muted, formatter: (v: number) => (v >= 10 ? v.toFixed(0) : v.toFixed(1)) } },
       series: [
         { type: 'line', name: 'liq', data: liquid.map(([h, P]) => [cx(h), cy(P)]), symbol: 'none', smooth: true, lineStyle: { color: c.accent, width: 2 }, tooltip: { show: false }, silent: true, z: 2 },
         { type: 'line', name: 'vap', data: vapor.map(([h, P]) => [cx(h), cy(P)]), symbol: 'none', smooth: true, lineStyle: { color: c.accent, width: 2 }, tooltip: { show: false }, silent: true, z: 2 },

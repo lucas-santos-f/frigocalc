@@ -1,4 +1,4 @@
-// Metadados dos fluidos refrigerantes (ASHRAE 34, IPCC AR4 para GWP100 — base regulatória usual; AR5 informativo).
+// Refrigerant metadata. Safety classes per ASHRAE 34; GWP100 from IPCC AR4 (the usual regulatory basis), AR5 for reference.
 export type SafetyClass = 'A1' | 'A2L' | 'A2' | 'A3' | 'B1' | 'B2L' | 'B2' | 'B3'
 export type FluidFamily = 'natural' | 'HFC' | 'HFO' | 'HCFC' | 'blend_HFC' | 'blend_HFO'
 
@@ -11,22 +11,22 @@ export interface RefrigerantMeta {
   gwpAR5: number
   odp: number
   color: string
-  /** aplicações típicas */
+  /** typical applications */
   uses: ('LT' | 'MT' | 'HT' | 'industrial' | 'commercial' | 'chiller' | 'cascade_LT' | 'transcritical')[]
-  /** carga típica kg por kW de capacidade frigorífica (estimativa inicial) */
+  /** typical charge in kg per kW of refrigerating capacity, as a first estimate */
   chargeKgPerKW: number
   legacy?: boolean
   notesKey: string
 }
 
 export const REFRIGERANTS: RefrigerantMeta[] = [
-  { id: 'R717', name: 'R-717 Amônia (NH₃)', family: 'natural', safety: 'B2L', gwpAR4: 0, gwpAR5: 0, odp: 0, color: '#1b7f3b', uses: ['LT', 'MT', 'industrial', 'chiller'], chargeKgPerKW: 1.2, notesKey: 'R717' },
-  { id: 'R744', name: 'R-744 Dióxido de carbono (CO₂)', family: 'natural', safety: 'A1', gwpAR4: 1, gwpAR5: 1, odp: 0, color: '#2b6cb0', uses: ['LT', 'MT', 'commercial', 'industrial', 'cascade_LT', 'transcritical'], chargeKgPerKW: 1.5, notesKey: 'R744' },
-  { id: 'R290', name: 'R-290 Propano', family: 'natural', safety: 'A3', gwpAR4: 3, gwpAR5: 3, odp: 0, color: '#d97706', uses: ['MT', 'HT', 'commercial', 'chiller'], chargeKgPerKW: 0.8, notesKey: 'R290' },
-  { id: 'R1270', name: 'R-1270 Propileno', family: 'natural', safety: 'A3', gwpAR4: 2, gwpAR5: 2, odp: 0, color: '#b45309', uses: ['LT', 'MT', 'industrial', 'chiller'], chargeKgPerKW: 0.8, notesKey: 'R1270' },
-  { id: 'R600a', name: 'R-600a Isobutano', family: 'natural', safety: 'A3', gwpAR4: 3, gwpAR5: 3, odp: 0, color: '#92400e', uses: ['HT', 'commercial'], chargeKgPerKW: 0.6, notesKey: 'R600a' },
+  { id: 'R717', name: 'R-717 Ammonia (NH₃)', family: 'natural', safety: 'B2L', gwpAR4: 0, gwpAR5: 0, odp: 0, color: '#1b7f3b', uses: ['LT', 'MT', 'industrial', 'chiller'], chargeKgPerKW: 1.2, notesKey: 'R717' },
+  { id: 'R744', name: 'R-744 Carbon dioxide (CO₂)', family: 'natural', safety: 'A1', gwpAR4: 1, gwpAR5: 1, odp: 0, color: '#2b6cb0', uses: ['LT', 'MT', 'commercial', 'industrial', 'cascade_LT', 'transcritical'], chargeKgPerKW: 1.5, notesKey: 'R744' },
+  { id: 'R290', name: 'R-290 Propane', family: 'natural', safety: 'A3', gwpAR4: 3, gwpAR5: 3, odp: 0, color: '#d97706', uses: ['MT', 'HT', 'commercial', 'chiller'], chargeKgPerKW: 0.8, notesKey: 'R290' },
+  { id: 'R1270', name: 'R-1270 Propylene', family: 'natural', safety: 'A3', gwpAR4: 2, gwpAR5: 2, odp: 0, color: '#b45309', uses: ['LT', 'MT', 'industrial', 'chiller'], chargeKgPerKW: 0.8, notesKey: 'R1270' },
+  { id: 'R600a', name: 'R-600a Isobutane', family: 'natural', safety: 'A3', gwpAR4: 3, gwpAR5: 3, odp: 0, color: '#92400e', uses: ['HT', 'commercial'], chargeKgPerKW: 0.6, notesKey: 'R600a' },
   { id: 'R134a', name: 'R-134a', family: 'HFC', safety: 'A1', gwpAR4: 1430, gwpAR5: 1300, odp: 0, color: '#6b7280', uses: ['MT', 'HT', 'chiller', 'commercial'], chargeKgPerKW: 3.0, notesKey: 'R134a' },
-  { id: 'R22', name: 'R-22 (HCFC, legado)', family: 'HCFC', safety: 'A1', gwpAR4: 1810, gwpAR5: 1760, odp: 0.055, color: '#9ca3af', uses: ['LT', 'MT', 'HT'], chargeKgPerKW: 3.0, legacy: true, notesKey: 'R22' },
+  { id: 'R22', name: 'R-22 (HCFC, legacy)', family: 'HCFC', safety: 'A1', gwpAR4: 1810, gwpAR5: 1760, odp: 0.055, color: '#9ca3af', uses: ['LT', 'MT', 'HT'], chargeKgPerKW: 3.0, legacy: true, notesKey: 'R22' },
   { id: 'R32', name: 'R-32', family: 'HFC', safety: 'A2L', gwpAR4: 675, gwpAR5: 677, odp: 0, color: '#7c3aed', uses: ['HT', 'chiller'], chargeKgPerKW: 2.0, notesKey: 'R32' },
   { id: 'R404A', name: 'R-404A', family: 'blend_HFC', safety: 'A1', gwpAR4: 3922, gwpAR5: 3943, odp: 0, color: '#dc2626', uses: ['LT', 'MT', 'commercial'], chargeKgPerKW: 3.0, legacy: true, notesKey: 'R404A' },
   { id: 'R507A', name: 'R-507A', family: 'blend_HFC', safety: 'A1', gwpAR4: 3985, gwpAR5: 3985, odp: 0, color: '#b91c1c', uses: ['LT', 'MT', 'commercial', 'industrial'], chargeKgPerKW: 3.0, legacy: true, notesKey: 'R507A' },

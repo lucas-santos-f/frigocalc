@@ -1,9 +1,9 @@
-// Psicrometria do ar úmido — ASHRAE Handbook Fundamentals, cap. 1 (Hyland & Wexler).
-// T em °C, P em kPa, W em kg_água/kg_ar_seco, h em kJ/kg_ar_seco, v em m³/kg_ar_seco.
+// Moist-air psychrometrics from ASHRAE Fundamentals, ch. 1 (Hyland-Wexler).
+// T in °C, P in kPa, W in kg_w/kg_da, h in kJ/kg_da, v in m³/kg_da.
 
 export const P_ATM = 101.325
 
-/** Pressão de saturação do vapor d'água (kPa) sobre água (T ≥ 0) ou gelo (T < 0). */
+/** Saturation pressure of water vapor (kPa), over liquid water at T ≥ 0 °C and over ice below. */
 export function pws(tC: number): number {
   const T = tC + 273.15
   let lnP: number
@@ -28,12 +28,12 @@ export function pws(tC: number): number {
   return Math.exp(lnP) / 1000
 }
 
-/** Umidade absoluta a partir da pressão parcial de vapor. */
+/** Humidity ratio from the water vapor partial pressure (kPa). */
 export function wFromPw(pw: number, p = P_ATM): number {
   return (0.621945 * pw) / (p - pw)
 }
 
-/** Umidade absoluta a partir de T (°C) e UR (0–1). */
+/** Humidity ratio from T (°C) and RH (0–1). */
 export function wFromRh(tC: number, rh: number, p = P_ATM): number {
   return wFromPw(Math.max(0, Math.min(1, rh)) * pws(tC), p)
 }
@@ -46,22 +46,22 @@ export function rhFromW(tC: number, w: number, p = P_ATM): number {
   return Math.max(0, Math.min(1, pwFromW(w, p) / pws(tC)))
 }
 
-/** Entalpia específica do ar úmido (kJ/kg_ar_seco). */
+/** Moist air specific enthalpy, kJ/kg_da. */
 export function enthalpy(tC: number, w: number): number {
   return 1.006 * tC + w * (2501 + 1.86 * tC)
 }
 
-/** Volume específico (m³/kg_ar_seco). */
+/** Specific volume, m³/kg_da. */
 export function specificVolume(tC: number, w: number, p = P_ATM): number {
   return (0.287042 * (tC + 273.15) * (1 + 1.607858 * w)) / p
 }
 
-/** Densidade do ar úmido (kg/m³ de mistura). */
+/** Moist air density, kg of mixture per m³. */
 export function density(tC: number, w: number, p = P_ATM): number {
   return (1 + w) / specificVolume(tC, w, p)
 }
 
-/** Ponto de orvalho (°C) a partir de W. */
+/** Dew point (°C) from W. */
 export function dewPoint(w: number, p = P_ATM): number {
   const pw = Math.max(pwFromW(w, p), 1e-6)
   const a = Math.log(pw)
@@ -70,12 +70,12 @@ export function dewPoint(w: number, p = P_ATM): number {
   return 6.09 + 12.608 * a + 0.4959 * a * a
 }
 
-/** Umidade absoluta de saturação a uma dada temperatura. */
+/** Saturation humidity ratio at T (°C). */
 export function wSat(tC: number, p = P_ATM): number {
   return wFromPw(pws(tC), p)
 }
 
-/** Temperatura de bulbo úmido (°C) por bissecção na equação psicrométrica (ASHRAE eq. 35/37). */
+/** Thermodynamic wet-bulb temperature (°C), solved by bisection on ASHRAE eq. 35/37. */
 export function wetBulb(tC: number, w: number, p = P_ATM): number {
   const f = (twb: number) => {
     const ws = wSat(twb, p)
@@ -96,7 +96,7 @@ export function wetBulb(tC: number, w: number, p = P_ATM): number {
   return 0.5 * (lo + hi)
 }
 
-/** Umidade absoluta a partir de T e bulbo úmido. */
+/** Humidity ratio from dry-bulb and wet-bulb temperatures (ASHRAE eq. 35/37). */
 export function wFromWetBulb(tC: number, twb: number, p = P_ATM): number {
   const ws = wSat(twb, p)
   return twb >= 0
@@ -117,7 +117,7 @@ export interface MoistAir {
   P: number
 }
 
-/** Estado completo do ar úmido a partir de T e (UR | W | Twb). */
+/** Full moist-air state from T plus one of RH, W or Twb. W is capped at saturation. */
 export function moistAir(tC: number, opts: { rh?: number; w?: number; twb?: number }, p = P_ATM): MoistAir {
   let w: number
   if (opts.w !== undefined) w = Math.max(0, opts.w)

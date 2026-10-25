@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Lint, tipos, testes e build
+    name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -27,26 +27,26 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Instalar dependências (lockfile)
+      - name: Install dependencies
         run: npm ci --no-fund --no-audit
 
       - name: Lint
         run: npm run lint
 
-      - name: Verificação de tipos
+      - name: Typecheck
         run: npm run typecheck
 
-      - name: Testes do motor de cálculo
+      - name: Test
         run: npm test
 
-      - name: Build de produção
+      - name: Build
         run: npm run build
 
-      - name: Auditoria de dependências (alta/crítica)
-        # Só dependências que vão para o site publicado (ferramentas de desenvolvimento não são distribuídas)
+      - name: Audit production dependencies
+        # only what ships with the site; dev tooling is never deployed
         run: npm audit --omit=dev --audit-level=high
 
-      - name: Publicar artefato do build
+      - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
           name: dist
@@ -54,14 +54,14 @@ jobs:
           retention-days: 7
 
   secrets:
-    name: Varredura de segredos
+    name: Secret scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Gitleaks (histórico completo)
+      - name: Gitleaks (full history)
         env:
           GITLEAKS_VERSION: 8.28.0
         run: |

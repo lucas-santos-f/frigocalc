@@ -1,31 +1,31 @@
-# Política de segurança
+# Security policy
 
-## Modelo de ameaça
+## Threat model
 
-O FrigoCalc é um aplicativo **100% estático**: todo o cálculo roda no navegador do usuário e nenhum dado é enviado a servidor. Os cenários salvos ficam apenas no `localStorage` do próprio navegador. Não há autenticação, banco de dados nem API própria.
+FrigoCalc is a static site. All calculations run in the user's browser and no data is sent anywhere. Saved scenarios live only in the browser's `localStorage`. There is no login, no database and no API of its own.
 
-Superfícies relevantes:
+What can still reach the app from outside:
 
-- Conteúdo de terceiros injetado por link de compartilhamento (`#s=...`) → sempre validado com esquema estrito (zod) antes de ser usado; nunca executado.
-- Arquivos JSON importados pelo usuário → mesma validação; limite de tamanho; nada é interpretado como código.
-- Cadeia de dependências (npm) → versões travadas por lockfile, `npm audit` no CI, Dependabot mensal e agrupado, CodeQL.
-- Hospedagem (Cloudflare Workers Static Assets) → HTTPS obrigatório, HSTS, CSP estrita sem `unsafe-eval` e sem scripts externos, `frame-ancestors 'none'` (ver `public/_headers`).
+- **Share links** (`#s=...`): the scenario is decoded and checked against a strict Zod schema before it is used. The URL fragment never reaches the server and nothing in it is executed.
+- **Imported JSON files:** the same schema check plus a 256 kB size limit. Nothing in them is treated as code.
+- **Dependencies:** versions pinned by the lockfile, `npm audit` in CI, grouped monthly Dependabot updates and CodeQL.
+- **Hosting** (Cloudflare Workers Static Assets): HTTPS only, HSTS, a strict CSP with no `unsafe-eval` and no third-party scripts, and `frame-ancestors 'none'` (see `public/_headers`).
 
-## Controles implementados
+## Controls
 
-| Controle | Onde |
+| Control | Where |
 | --- | --- |
 | CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy, COOP/COEP/CORP | `public/_headers` |
-| Sem `eval`, `new Function`, `dangerouslySetInnerHTML` | regras ESLint + revisão |
-| Validação de entrada (links, importação, formulários) | `src/state/schema.ts` |
-| Varredura de segredos (gitleaks), CodeQL, `npm audit` | `.github/workflows/*` |
-| Dependabot (npm, GitHub Actions, pip) | `.github/dependabot.yml` |
-| Segredos apenas no painel do Cloudflare / GitHub Secrets; `.env` ignorado | `.gitignore` |
+| No `eval`, `new Function` or `dangerouslySetInnerHTML` | ESLint rules and code review |
+| Validation of share links, imported files and stored scenarios | `src/state/schema.ts` |
+| Secret scanning (gitleaks over the full history), CodeQL, `npm audit` | `.github/workflows/` |
+| Dependabot for npm, GitHub Actions and pip | `.github/dependabot.yml` |
+| Deploy tokens kept in GitHub Secrets and Cloudflare only; `.env` files ignored | `.gitignore` |
 
-## Como reportar uma vulnerabilidade
+## Reporting a vulnerability
 
-Abra uma *security advisory* privada no GitHub (aba **Security → Report a vulnerability**) do repositório. Não abra issue pública com detalhes exploráveis. Resposta inicial em até 7 dias.
+Please open a private security advisory on GitHub (**Security → Report a vulnerability** on this repository) instead of a public issue with exploitable details. You should get a first reply within 7 days.
 
-## Versões suportadas
+## Supported versions
 
-Apenas a versão publicada na branch `main` recebe correções.
+Only the version deployed from `main` gets fixes.

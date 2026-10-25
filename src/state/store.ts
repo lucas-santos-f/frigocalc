@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import LZString from 'lz-string'
 import type { ApplicationId, Scenario } from '../engine/types'
 import { createScenario, uid } from '../engine/presets'
-import type { Lang } from '../i18n'
+import { translate, type Lang } from '../i18n'
 import type { UnitSystem } from '../units'
 import { MAX_IMPORT_BYTES, parseScenario, scenarioSchema } from './schema'
 
@@ -37,11 +37,11 @@ function cloneScenario(sc: Scenario): Scenario {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => {
-      const first = createScenario('camara_resfriados', 'Câmara de resfriados — exemplo')
+      const first = createScenario('chilled_storage', translate('en', 'scenario.example_name'))
       return {
         scenarios: [first],
         currentId: first.id,
-        lang: navigator.language?.toLowerCase().startsWith('pt') ? 'pt-BR' : 'en',
+        lang: 'en',
         units: 'SI',
         tab: 'load',
         toast: null,
@@ -60,14 +60,14 @@ export const useStore = create<AppState>()(
             if (!src) return {}
             const copy = cloneScenario(src)
             copy.id = uid()
-            copy.name = `${src.name} (cópia)`
+            copy.name = `${src.name} (${translate(s.lang, 'scenario.copy_suffix')})`
             copy.createdAt = copy.updatedAt = new Date().toISOString()
             return { scenarios: [...s.scenarios, copy].slice(-MAX_SCENARIOS), currentId: copy.id }
           }),
         remove: (id) =>
           set((s) => {
             let rest = s.scenarios.filter((x) => x.id !== id)
-            if (rest.length === 0) rest = [createScenario('camara_resfriados', 'Novo cenário')]
+            if (rest.length === 0) rest = [createScenario('chilled_storage', translate(s.lang, 'scenario.untitled'))]
             const currentId = s.currentId === id ? rest[rest.length - 1].id : s.currentId
             return { scenarios: rest, currentId }
           }),
@@ -97,12 +97,12 @@ export const useStore = create<AppState>()(
       }
     },
     {
-      name: 'frigocalc:v1',
-      version: 1,
+      name: 'frigocalc:v2',
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ scenarios: s.scenarios, currentId: s.currentId, lang: s.lang, units: s.units }),
       merge: (persisted, current) => {
-        // Defesa: o localStorage pode ter sido alterado — só aceitamos cenários válidos.
+        // localStorage can be edited by hand, so only scenarios that pass the schema survive
         const p = (persisted ?? {}) as Partial<AppState>
         const valid = Array.isArray(p.scenarios) ? p.scenarios.map((x) => scenarioSchema.safeParse(x)).filter((r) => r.success).map((r) => r.data as Scenario) : []
         const scenarios = valid.length ? valid.slice(-MAX_SCENARIOS) : current.scenarios
@@ -122,8 +122,6 @@ export const useStore = create<AppState>()(
 export function useCurrentScenario(): Scenario {
   return useStore((s) => s.scenarios.find((x) => x.id === s.currentId) ?? s.scenarios[0])
 }
-
-// ---------- compartilhamento / exportação ----------
 
 export function encodeShare(sc: Scenario): string {
   return LZString.compressToEncodedURIComponent(JSON.stringify({ v: 1, s: sc }))
@@ -158,7 +156,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
 }
 
 export function safeFileName(name: string): string {
-  return name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9_-]+/g, '_').slice(0, 60) || 'cenario'
+  return name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9_-]+/g, '_').slice(0, 60) || 'scenario'
 }
 
 export async function importJsonFile(file: File): Promise<Scenario | null> {

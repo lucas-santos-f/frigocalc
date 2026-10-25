@@ -5,22 +5,22 @@ import reference from '../../data/tables/_reference.json'
 type Ref = Record<string, { Te: number; Tc: number; Pe_kPa: number; Pc_kPa: number; h1: number; s1: number; v1: number; h2s: number; T2s: number; Tb_cond: number; hl_cond: number; hv_evap: number; sv_evap: number; hl_evap: number; h3_sc5: number; COP_ideal_SC5: number }>
 const REF = reference as Ref
 
-describe('interpolação das tabelas CoolProp', () => {
+describe('CoolProp table interpolation', () => {
   for (const [id, r] of Object.entries(REF)) {
-    it(`${id}: pressões de saturação`, async () => {
+    it(`${id}: saturation pressures`, async () => {
       const f = await loadFluid(id)
-      expect(f.pDew(r.Te)).toBeCloseTo(r.Pe_kPa, -0.5) // ±0,3 %
+      expect(f.pDew(r.Te)).toBeCloseTo(r.Pe_kPa, -0.5)
       expect(Math.abs(f.pDew(r.Te) / r.Pe_kPa - 1)).toBeLessThan(0.004)
       expect(Math.abs(f.pDew(r.Tc) / r.Pc_kPa - 1)).toBeLessThan(0.004)
     })
-    it(`${id}: estado de sucção superaquecido 5 K`, async () => {
+    it(`${id}: suction state at 5 K superheat`, async () => {
       const f = await loadFluid(id)
       const v = f.vapor(r.Pe_kPa, r.Te + 5)
       expect(Math.abs(v.h - r.h1)).toBeLessThan(0.6)
       expect(Math.abs(v.s - r.s1)).toBeLessThan(0.0025)
       expect(Math.abs(1 / v.rho / r.v1 - 1)).toBeLessThan(0.01)
     })
-    it(`${id}: compressão isentrópica e líquido sub-resfriado`, async () => {
+    it(`${id}: isentropic compression and subcooled liquid`, async () => {
       const f = await loadFluid(id)
       const s2 = f.stateFromPS(r.Pc_kPa, r.s1)
       expect(Math.abs(s2.h - r.h2s)).toBeLessThan(Math.max(1.0, 0.001 * Math.abs(r.h2s)))
@@ -33,16 +33,16 @@ describe('interpolação das tabelas CoolProp', () => {
     })
   }
 
-  it('R744: região supercrítica (gas cooler 90 bar, 35 °C)', async () => {
+  it('R744: supercritical region (gas cooler at 90 bar, 35 °C)', async () => {
     const f = await loadFluid('R744')
     const v = f.vapor(9000, 308.15)
-    // CoolProp: h ≈ 300–330 kJ/kg nessa condição (referência IIR), densidade ~ 560–700 kg/m³
+    // CoolProp puts h at about 300–330 kJ/kg here (IIR reference) and density around 560–700 kg/m³
     expect(v.rho).toBeGreaterThan(400)
     expect(v.rho).toBeLessThan(800)
     expect(v.clamped).toBeFalsy()
   })
 
-  it('bifásico a partir de (P, h)', async () => {
+  it('two-phase state from (P, h)', async () => {
     const f = await loadFluid('R134a')
     const sat = f.satAtP(300)!
     const st = f.stateFromPH(300, (sat.hl + sat.hv) / 2)

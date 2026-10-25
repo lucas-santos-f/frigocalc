@@ -1,4 +1,4 @@
-// Conversão de unidades para exibição. Internamente tudo é SI.
+// Display unit conversion. Everything is SI internally.
 export type UnitSystem = 'SI' | 'IP'
 
 export type Quantity = 'power' | 'temp' | 'dtemp' | 'length' | 'area' | 'volume' | 'mass' | 'massflow' | 'pressure' | 'airflow' | 'waterflow' | 'enthalpy' | 'energy' | 'density' | 'uvalue' | 'kgperkw' | 'wpm2'
@@ -23,7 +23,7 @@ export const UNITS: Record<Quantity, UnitDef> = {
   airflow: { SI: { label: 'm³/h', f: id, inv: id }, IP: { label: 'cfm', f: (v) => v / 1.699, inv: (v) => v * 1.699 } },
   waterflow: { SI: { label: 'm³/h', f: id, inv: id }, IP: { label: 'gpm', f: (v) => v * 4.40287, inv: (v) => v / 4.40287 } },
   enthalpy: { SI: { label: 'kJ/kg', f: id, inv: id }, IP: { label: 'Btu/lb', f: (v) => v / 2.326, inv: (v) => v * 2.326 } },
-  energy: { SI: { label: 'kWh/dia', f: id, inv: id }, IP: { label: 'kBtu/dia', f: (v) => v * 3.412142, inv: (v) => v / 3.412142 } },
+  energy: { SI: { label: 'kWh/d', f: id, inv: id }, IP: { label: 'kBtu/d', f: (v) => v * 3.412142, inv: (v) => v / 3.412142 } },
   density: { SI: { label: 'kg/m³', f: id, inv: id }, IP: { label: 'lb/ft³', f: (v) => v / 16.01846, inv: (v) => v * 16.01846 } },
   uvalue: { SI: { label: 'W/m²K', f: id, inv: id }, IP: { label: 'Btu/h·ft²·°F', f: (v) => v / 5.678263, inv: (v) => v * 5.678263 } },
   kgperkw: { SI: { label: 'kg/kW', f: id, inv: id }, IP: { label: 'lb/TR', f: (v) => (v / 0.45359237) * 3.51685, inv: (v) => (v * 0.45359237) / 3.51685 } },
@@ -40,7 +40,7 @@ export function unitLabel(q: Quantity, sys: UnitSystem): string {
   return UNITS[q][sys].label
 }
 
-/** Potência frigorífica em outras unidades usuais (para exibição auxiliar). */
+/** Refrigerating capacity in other common units, for secondary display. */
 export function powerAlternatives(kW: number): { TR: number; kcalh: number; BTUh: number } {
   return { TR: kW / 3.51685, kcalh: kW * 859.845, BTUh: kW * 3412.142 }
 }

@@ -1,4 +1,4 @@
-// Modelos prontos: aplicações, produtos e cargas típicas. Valores iniciais editáveis pelo usuário.
+// Built-in templates for applications, products and typical direct loads. Every value is an editable starting point.
 import type { ApplicationId, DirectLoad, Insulation, ProductLoad, Scenario } from './types'
 
 export interface ProductPreset {
@@ -36,7 +36,7 @@ export interface DirectPreset {
 }
 
 export const DIRECT_PRESETS: DirectPreset[] = [
-  { id: 'case_mt_open', nameKey: 'direct.case_mt_open', kW: 1.4, hours: 24 }, // por metro
+  { id: 'case_mt_open', nameKey: 'direct.case_mt_open', kW: 1.4, hours: 24 }, // display cases are per meter
   { id: 'case_mt_door', nameKey: 'direct.case_mt_door', kW: 0.5, hours: 24 },
   { id: 'case_lt_island', nameKey: 'direct.case_lt_island', kW: 0.6, hours: 24 },
   { id: 'case_lt_door', nameKey: 'direct.case_lt_door', kW: 0.9, hours: 24 },
@@ -67,7 +67,7 @@ export function makeDirect(presetId: string, multiplier = 1, name?: string): Dir
   return { id: uid(), name: name ?? d.nameKey, kW: Math.round(d.kW * multiplier * 100) / 100, hours: d.hours }
 }
 
-export const APPLICATIONS: ApplicationId[] = ['camara_resfriados', 'camara_congelados', 'tunel_congelamento', 'frigorifico_carcacas', 'sala_processo', 'supermercado', 'industria_quimica', 'data_center', 'personalizado']
+export const APPLICATIONS: ApplicationId[] = ['chilled_storage', 'frozen_storage', 'blast_freezer', 'carcass_chilling', 'process_room', 'supermarket', 'chemical_plant', 'data_center', 'custom']
 
 function base(application: ApplicationId, name: string): Scenario {
   const now = new Date().toISOString()
@@ -116,10 +116,10 @@ const noEnvelope = (s: Scenario) => {
 export function createScenario(application: ApplicationId, name: string): Scenario {
   const s = base(application, name)
   switch (application) {
-    case 'camara_resfriados':
+    case 'chilled_storage':
       s.products = [makeProduct('beef', 5000, 10, 2, 24, 20000)]
       break
-    case 'camara_congelados':
+    case 'frozen_storage':
       s.room = { ...s.room, length: 15, width: 10, height: 6, tInt: -22, rhInt: 90, runHours: 18 }
       s.envelope = { walls: ins(150), roof: ins(150, 5), floor: ins(120) }
       s.infiltration = { ...s.infiltration, doorWidth: 2.2, doorHeight: 2.8, doorOpenMinutesPerDay: 90, protectionEffectiveness: 0.6 }
@@ -128,7 +128,7 @@ export function createScenario(application: ApplicationId, name: string): Scenar
       s.cycle = { ...s.cycle, refrigerant: 'R717', system: 'two_stage', tEvap: -30, tCond: 35, superheat: 5, compressorType: 'screw' }
       s.plant = { ...s.plant, condenserType: 'evaporative' }
       break
-    case 'tunel_congelamento':
+    case 'blast_freezer':
       s.room = { ...s.room, length: 6, width: 4, height: 3.5, tInt: -35, rhInt: 90, tExt: 25, tGround: 10, runHours: 20 }
       s.envelope = { walls: ins(200), roof: ins(200, 0), floor: ins(150) }
       s.infiltration = { ...s.infiltration, doorCount: 1, doorWidth: 1.5, doorHeight: 2.2, doorOpenMinutesPerDay: 20, protectionEffectiveness: 0.3 }
@@ -137,7 +137,7 @@ export function createScenario(application: ApplicationId, name: string): Scenar
       s.cycle = { ...s.cycle, refrigerant: 'R717', system: 'two_stage', tEvap: -42, tCond: 35, superheat: 3, subcooling: 2, compressorType: 'screw' }
       s.plant = { ...s.plant, condenserType: 'evaporative' }
       break
-    case 'frigorifico_carcacas':
+    case 'carcass_chilling':
       s.room = { ...s.room, length: 20, width: 12, height: 6, tInt: 0, rhInt: 90, tExt: 28, runHours: 20 }
       s.envelope = { walls: ins(120), roof: ins(120, 5), floor: ins(80) }
       s.infiltration = { ...s.infiltration, doorWidth: 2.4, doorHeight: 3.0, doorOpenMinutesPerDay: 240, protectionEffectiveness: 0.4 }
@@ -146,7 +146,7 @@ export function createScenario(application: ApplicationId, name: string): Scenar
       s.cycle = { ...s.cycle, refrigerant: 'R717', system: 'single', tEvap: -8, tCond: 35, superheat: 5, compressorType: 'screw' }
       s.plant = { ...s.plant, nCompressors: 3, condenserType: 'evaporative' }
       break
-    case 'sala_processo':
+    case 'process_room':
       s.room = { ...s.room, length: 25, width: 15, height: 4, tInt: 10, rhInt: 70, tExt: 28, runHours: 16 }
       s.envelope = { walls: ins(60), roof: ins(80, 3), floor: ins(0, 0, false) }
       s.infiltration = { ...s.infiltration, doorCount: 3, doorOpenMinutesPerDay: 300, protectionEffectiveness: 0.3 }
@@ -154,13 +154,13 @@ export function createScenario(application: ApplicationId, name: string): Scenar
       s.ventilation = { airflowM3h: 3000 }
       s.cycle = { ...s.cycle, refrigerant: 'R134a', system: 'single', tEvap: 2, tCond: 40, compressorType: 'screw' }
       break
-    case 'supermercado':
+    case 'supermarket':
       noEnvelope(s)
       s.directLoads = [makeDirect('case_mt_open', 40, 'direct.case_mt_open_40m'), makeDirect('case_mt_door', 20, 'direct.case_mt_door_20m'), makeDirect('case_serveover', 10, 'direct.case_serveover_10m'), makeDirect('coldroom_mt', 2, 'direct.coldroom_mt_x2')]
       s.cycle = { ...s.cycle, refrigerant: 'R448A', system: 'single', tEvap: -10, tCond: 42, compressorType: 'scroll' }
       s.plant = { ...s.plant, nCompressors: 4, standby: false, condenserType: 'air' }
       break
-    case 'industria_quimica':
+    case 'chemical_plant':
       noEnvelope(s)
       s.directLoads = [makeDirect('reactor'), makeDirect('process_condenser'), makeDirect('glycol_losses')]
       s.cycle = { ...s.cycle, refrigerant: 'R717', system: 'single', tEvap: -16, tCond: 38, superheat: 5, compressorType: 'screw' }

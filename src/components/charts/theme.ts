@@ -1,8 +1,19 @@
-// Cores dos gráficos por tema (fora dos componentes para o Fast Refresh).
-export function chartColors(theme: 'light' | 'dark') {
-  return theme === 'dark'
-    ? { text: '#e6edf7', muted: '#9fb0c5', grid: '#273449', surface: '#111a2b', primary: '#4f8df7', accent: '#38bdf8' }
-    : { text: '#0f172a', muted: '#526071', grid: '#d6dee8', surface: '#ffffff', primary: '#0b3d91', accent: '#0ea5e9' }
+// Charts read the CSS custom properties so they follow the active theme and each app's brand colors.
+function cssVar(name: string, fallback: string): string {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return v || fallback
 }
 
-export const PALETTE = ['#0b3d91', '#0ea5e9', '#15803d', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#65a30d', '#b45309', '#6b7280']
+export function chartColors(theme: 'light' | 'dark') {
+  const dark = theme === 'dark'
+  return {
+    text: cssVar('--text', dark ? '#e6eaf0' : '#0f172a'),
+    muted: cssVar('--muted', dark ? '#8b95a5' : '#64748b'),
+    grid: cssVar('--border', dark ? '#232b38' : '#e6e8ec'),
+    surface: cssVar('--surface', dark ? '#11161f' : '#ffffff'),
+    primary: cssVar('--accent', '#2563eb'),
+    accent: cssVar('--accent-2', '#06b6d4'),
+  }
+}
+
+export const PALETTE = ['#2563eb', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6', '#84cc16', '#f97316', '#64748b']

@@ -1,4 +1,5 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
+import { ChevronDown, Copy, Download, FileJson, FileSpreadsheet, Link2, Printer, Trash2, Upload } from 'lucide-react'
 import { encodeShare, exportJson, importJsonFile, useStore } from '../state/store'
 import { useT, type Computed } from '../hooks'
 import type { ApplicationId, Scenario } from '../engine/types'
@@ -7,8 +8,28 @@ import { exportCsv } from '../export'
 
 export function ScenarioBar({ sc, computed }: { sc: Scenario; computed: Computed }) {
   const t = useT()
-  const { scenarios, select, createNew, duplicate, remove, update, importScenario, showToast } = useStore()
+  const { scenarios, lang, select, createNew, duplicate, remove, update, importScenario, showToast } = useStore()
   const fileRef = useRef<HTMLInputElement>(null)
+  const menuRef = useRef<HTMLDetailsElement>(null)
+
+  useEffect(() => {
+    const close = (e: Event) => {
+      const menu = menuRef.current
+      if (!menu?.open) return
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !menu.contains(e.target as Node)) menu.open = false
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('pointerdown', close)
+      document.removeEventListener('keydown', close)
+    }
+  }, [])
+
+  const fromMenu = (action: () => void) => () => {
+    if (menuRef.current) menuRef.current.open = false
+    action()
+  }
 
   const share = async () => {
     const url = `${location.origin}${location.pathname}#s=${encodeShare(sc)}`
@@ -32,21 +53,30 @@ export function ScenarioBar({ sc, computed }: { sc: Scenario; computed: Computed
   }
 
   return (
-    <div className="scenario-bar no-print">
-      <div className="grow">
-        <select value={sc.id} onChange={(e) => select(e.target.value)} aria-label={t('scenario.list')} style={{ maxWidth: 260 }}>
+    <section className="scenario-head no-print">
+      <div className="scenario-title">
+        <label className="eyebrow" htmlFor="scenario-name">
+          {t('scenario.title')}
+        </label>
+        <input id="scenario-name" className="title-input" type="text" value={sc.name} maxLength={120} onChange={(e) => update((d) => (d.name = e.target.value || '—'))} />
+        <div className="scenario-meta">
+          {t(`application.${sc.application}`)} · {t('scenario.saved')}
+        </div>
+      </div>
+
+      <div className="scenario-actions">
+        <select className="btn-select" value={sc.id} onChange={(e) => select(e.target.value)} aria-label={t('scenario.list')} title={t('scenario.list')}>
           {scenarios.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
             </option>
           ))}
         </select>
-        <input type="text" value={sc.name} maxLength={120} aria-label={t('scenario.name')} onChange={(e) => update((d) => (d.name = e.target.value || '—'))} />
-      </div>
-      <div className="btn-row">
         <select
+          className="btn-select"
           value=""
           aria-label={t('scenario.new_from')}
+          title={t('scenario.new_from')}
           onChange={(e) => {
             const app = e.target.value as ApplicationId
             if (app) createNew(app, t(`application.${app}`))
@@ -59,35 +89,52 @@ export function ScenarioBar({ sc, computed }: { sc: Scenario; computed: Computed
             </option>
           ))}
         </select>
-        <button type="button" className="btn" onClick={() => duplicate(sc.id)}>
-          {t('scenario.duplicate')}
+        <button type="button" className="btn" onClick={() => duplicate(sc.id)} title={t('scenario.duplicate')}>
+          <Copy size={16} />
+          <span className="btn-label">{t('scenario.duplicate')}</span>
         </button>
+        <button type="button" className="btn" onClick={share} title={t('scenario.share')}>
+          <Link2 size={16} />
+          <span className="btn-label">{t('scenario.share')}</span>
+        </button>
+        <details className="menu" ref={menuRef}>
+          <summary className="btn" title={t('scenario.export')}>
+            <Download size={16} />
+            <span className="btn-label">{t('scenario.export')}</span>
+            <ChevronDown size={14} />
+          </summary>
+          <div className="menu-pop">
+            <button type="button" className="menu-item" onClick={fromMenu(() => exportJson(sc))}>
+              <FileJson size={16} />
+              {t('scenario.export_json')}
+            </button>
+            <button type="button" className="menu-item" onClick={fromMenu(() => fileRef.current?.click())}>
+              <Upload size={16} />
+              {t('scenario.import_json')}
+            </button>
+            <button type="button" className="menu-item" onClick={fromMenu(() => exportCsv(sc, computed, t, lang))}>
+              <FileSpreadsheet size={16} />
+              {t('scenario.export_csv')}
+            </button>
+            <button type="button" className="menu-item" onClick={fromMenu(() => window.print())}>
+              <Printer size={16} />
+              {t('scenario.print')}
+            </button>
+          </div>
+        </details>
+        <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => onImport(e.target.files?.[0])} />
         <button
           type="button"
-          className="btn danger"
+          className="btn icon danger"
+          aria-label={t('scenario.delete')}
+          title={t('scenario.delete')}
           onClick={() => {
             if (confirm(t('scenario.confirm_delete'))) remove(sc.id)
           }}
         >
-          {t('scenario.delete')}
-        </button>
-        <button type="button" className="btn" onClick={share}>
-          {t('scenario.share')}
-        </button>
-        <button type="button" className="btn" onClick={() => exportJson(sc)}>
-          {t('scenario.export_json')}
-        </button>
-        <button type="button" className="btn" onClick={() => fileRef.current?.click()}>
-          {t('scenario.import_json')}
-        </button>
-        <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={(e) => onImport(e.target.files?.[0])} />
-        <button type="button" className="btn" onClick={() => exportCsv(sc, computed, t)}>
-          {t('scenario.export_csv')}
-        </button>
-        <button type="button" className="btn" onClick={() => window.print()}>
-          {t('scenario.print')}
+          <Trash2 size={16} />
         </button>
       </div>
-    </div>
+    </section>
   )
 }

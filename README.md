@@ -1,63 +1,66 @@
 # FrigoCalc
 
-Calculadora visual de **carga térmica, ciclo de refrigeração e dimensionamento de sala de máquinas** para refrigeração comercial e industrial: câmaras frias (resfriados e congelados), túneis de congelamento, frigoríficos, salas de processo alimentício, supermercados, indústria química e data centers — com todos os fluidos refrigerantes usuais (amônia, CO₂ subcrítico/transcrítico, hidrocarbonetos, HFCs, HFOs e misturas).
+Cooling load, refrigeration cycle and machine room sizing for commercial and industrial refrigeration. It covers chilled and frozen cold rooms, blast freezers, carcass chilling, food processing rooms, supermarket racks, glycol process loops and chilled-water data centers. All the usual refrigerants are in: ammonia, subcritical and transcritical CO₂, hydrocarbons, HFCs, HFOs and blends.
 
-- **Site:** https://frigocalc.frioeclima.workers.dev
+**Live:** https://frigocalc.frioeclima.workers.dev
 
-Aplicação **100 % estática**: todo o cálculo roda no navegador, nada é enviado a servidor. Os cenários ficam salvos no próprio dispositivo (localStorage), podem ser exportados em JSON/CSV, impressos em PDF e compartilhados por link.
+Everything runs in the browser. Nothing is sent to a server: scenarios stay in the device's local storage and can be exported as JSON or CSV, printed to PDF or shared as a link.
 
-## Funcionalidades
+## Features
 
-- **Carga térmica** (ASHRAE Refrigeration): transmissão pelo isolamento, infiltração (renovações ou modelo de abertura de portas Gosney–Tanner), produto (sensível, latente de congelamento, respiração, embalagem), pessoas, iluminação, empilhadeiras, equipamentos, degelo, ar de renovação e cargas diretas (processo, expositores, TI). Modelos prontos por aplicação e por produto.
-- **Ciclo** com propriedades reais dos fluidos (tabelas geradas com CoolProp): estágio simples, duplo estágio com resfriador intermediário, cascata (dois fluidos) e CO₂ transcrítico com pressão ótima. Rendimentos estimados por tipo de compressor ou informados. Diagrama pressão–entalpia com o ciclo desenhado, pontos de estado, sensibilidade a temperaturas de evaporação/condensação.
-- **Sala de máquinas**: número de compressores (N+1), motores comerciais, deslocamento, rejeição de calor por tipo de condensador, demanda elétrica (kW, kVA, corrente, transformador), carga de fluido e CO₂ equivalente, ventilação de emergência e contínua (ASHRAE 15 / NBR 16069), área estimada e requisitos de segurança por classe ASHRAE 34.
-- **Comparação**: todos os fluidos nas mesmas condições (COP, potência, descarga, deslocamento, GWP, classe) e tabela de cenários salvos.
-- Unidades SI / imperiais, PT-BR / EN, tema claro/escuro, impressão.
+- **Cooling load** (ASHRAE Refrigeration Handbook): transmission through insulation, infiltration by air changes or by the Gosney–Tanner door-opening model, product heat (sensible, latent of freezing, respiration, packaging), people, lighting, forklifts, equipment, defrost, fresh air and direct loads such as process lines, display cases or IT. Templates per application and per product.
+- **Cycle** with real fluid properties from CoolProp tables: single stage, two stage with flash intercooler, cascade with two fluids, and transcritical CO₂ at optimum gas cooler pressure. Compressor efficiencies are estimated by compressor type or typed in. Pressure–enthalpy diagram with the cycle drawn on it, state point table and sensitivity to evaporating and condensing temperatures.
+- **Machine room:** number of compressors (N+1), standard motor sizes, displacement, heat rejection by condenser type, electrical demand (kW, kVA, current, transformer), refrigerant charge and CO₂ equivalent, emergency and continuous ventilation (ASHRAE 15, NBR 16069), estimated floor area and safety requirements by ASHRAE 34 class.
+- **Compare:** every fluid under the same conditions (COP, power, discharge temperature, displacement, GWP, safety class), plus a side-by-side table of all saved scenarios.
+- SI or IP units, English or Portuguese, light or dark theme, print layout.
 
-## Stack
+## Running locally
 
-React 19 + TypeScript + Vite · ECharts · Zustand · Zod · Vitest · Cloudflare Workers (Static Assets).
-
-## Como rodar
+Needs Node 20.19 or newer.
 
 ```bash
 npm ci
 npm run dev        # http://localhost:5173
-npm test           # testes do motor de cálculo (interpolação, ciclo, carga)
-npm run build      # dist/
+npm test           # engine tests: interpolation, cycle, load
+npm run lint
+npm run build      # output in dist/
 ```
 
-Regerar as tabelas de propriedades (opcional, requer Python 3 + CoolProp):
+The property tables in `src/data/tables/` are already in the repo. To rebuild them you need Python 3 and CoolProp:
 
 ```bash
 pip install -r tools/requirements.txt
 python tools/gen_tables.py
 ```
 
-## Estrutura
+## Project layout
 
-| Caminho | Conteúdo |
+| Path | What's there |
 | --- | --- |
-| `src\engine\` | Motor de cálculo: `props.ts` (propriedades/interpolação), `cycle.ts`, `load.ts`, `plant.ts`, `psychro.ts`, `presets.ts`, `refrigerants.ts` |
-| `src\data\tables\` | Tabelas JSON por fluido geradas com CoolProp |
-| `src\components\` | Interface (painéis, gráficos, campos) |
-| `src\state\` | Estado (Zustand + persistência) e validação (Zod) |
-| `src\i18n\` | Textos PT-BR / EN |
-| `tools\gen_tables.py` | Gerador das tabelas |
-| `public\_headers` | Cabeçalhos de segurança (CSP, HSTS etc.) para o Cloudflare |
+| `src/engine/` | Calculation engine: `props.ts` (properties and interpolation), `cycle.ts`, `load.ts`, `plant.ts`, `psychro.ts`, `presets.ts`, `refrigerants.ts` |
+| `src/data/tables/` | One JSON table per fluid, generated with CoolProp |
+| `src/components/` | Panels, charts and form controls |
+| `src/state/` | Zustand store with persistence, Zod schemas for every input |
+| `src/i18n/` | English and Portuguese strings |
+| `tools/gen_tables.py` | Table generator |
+| `public/_headers` | Security headers served by Cloudflare (CSP, HSTS and others) |
 
-## Segurança
+## Stack
 
-Ver `SECURITY.md`: CSP estrita sem scripts externos, validação de toda entrada (links, importação, localStorage), CI com lint, tipos, testes, `npm audit`, CodeQL, gitleaks e Dependabot.
+React 19, TypeScript 5.9, Vite 7, ECharts 6, Zustand 5, Zod 4, lz-string, Vitest, ESLint 9. Hosted on Cloudflare Workers Static Assets.
 
-## Publicação
+## Security
 
-Cloudflare Workers Static Assets (upload direto): `npm run deploy`. Via GitHub Actions: cadastrar `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` em *Secrets* e a variável `CF_DEPLOY_ENABLED=true` em *Variables*.
+Strict CSP with no third-party scripts, validation of everything that comes from outside (share links, imported files, local storage), and CI with lint, typecheck, tests, `npm audit`, CodeQL, gitleaks and Dependabot. Details in [SECURITY.md](SECURITY.md).
 
-## Aviso
+## Deploying
 
-Ferramenta de pré-dimensionamento. Não substitui o projeto executivo, a seleção em software de fabricante nem a verificação por engenheiro responsável conforme NBR 16069, NBR 16401 e normas aplicáveis.
+`npm run deploy` builds and uploads with wrangler. The GitHub Actions workflow does the same on every push to `main` once the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist and the `CF_DEPLOY_ENABLED` variable is set to `true`.
 
-## Licença
+## Disclaimer
 
-Todos os direitos reservados ao autor — © 2026. Licença definitiva será definida na abertura do repositório.
+This is a pre-design tool. It does not replace detailed design, manufacturer selection software or review by a licensed engineer under NBR 16069, NBR 16401 and the codes that apply to the project.
+
+## License
+
+© 2026. All rights reserved by the author. See [LICENSE](LICENSE).

@@ -3,11 +3,11 @@ import { autoAirChanges, computeLoad, personHeat, productEnthalpyChange } from '
 import { createScenario } from '../presets'
 import { moistAir, pws } from '../psychro'
 
-describe('psicrometria', () => {
-  it('pressão de saturação a 20 °C ≈ 2,339 kPa', () => {
+describe('psychrometrics', () => {
+  it('saturation pressure at 20 °C ≈ 2.339 kPa', () => {
     expect(pws(20)).toBeCloseTo(2.339, 2)
   })
-  it('ar a 25 °C / 50 %: W ≈ 0,00988, h ≈ 50,3 kJ/kg', () => {
+  it('air at 25 °C / 50 %: W ≈ 0.00988, h ≈ 50.3 kJ/kg', () => {
     const a = moistAir(25, { rh: 0.5 })
     expect(a.W).toBeCloseTo(0.00988, 4)
     expect(a.h).toBeCloseTo(50.3, 0)
@@ -16,19 +16,19 @@ describe('psicrometria', () => {
   })
 })
 
-describe('carga térmica', () => {
-  it('entalpia do produto com congelamento', () => {
+describe('refrigeration load', () => {
+  it('product enthalpy across freezing', () => {
     const dh = productEnthalpyChange({ tIn: 5, tOut: -18, tFreeze: -2.8, cpAbove: 3.3, cpBelow: 1.8, latent: 247 })
     expect(dh).toBeCloseTo(3.3 * 7.8 + 247 + 1.8 * 15.2, 1)
     expect(productEnthalpyChange({ tIn: 2, tOut: 5, tFreeze: -1, cpAbove: 3, cpBelow: 1.5, latent: 200 })).toBe(0)
   })
-  it('renovações de ar e calor por pessoa', () => {
+  it('air changes and heat per person', () => {
     expect(autoAirChanges(283, 2)).toBeCloseTo(9.6, 0)
     expect(personHeat(0)).toBe(270)
     expect(personHeat(-20)).toBe(390)
   })
-  it('câmara de resfriados: total plausível e soma dos grupos', () => {
-    const sc = createScenario('camara_resfriados', 't')
+  it('chilled storage: plausible total and groups add up', () => {
+    const sc = createScenario('chilled_storage', 't')
     const r = computeLoad(sc)
     expect(r.kWEquipment).toBeGreaterThan(10)
     expect(r.kWEquipment).toBeLessThan(80)
@@ -37,14 +37,14 @@ describe('carga térmica', () => {
     expect(r.items.find((i) => i.key === 'fans')).toBeDefined()
     expect(r.kWEquipment).toBeCloseTo(r.kWEquipmentBase * 1.1, 6)
   })
-  it('túnel de congelamento: produto domina e usa tempo de pulldown', () => {
-    const sc = createScenario('tunel_congelamento', 't')
+  it('blast freezer: product dominates and uses the pull-down time', () => {
+    const sc = createScenario('blast_freezer', 't')
     const r = computeLoad(sc)
     const prod = r.items.find((i) => i.group === 'product')!
     expect(prod.kWSizing).toBeCloseTo(prod.kWhDay / 8, 6)
     expect(r.byGroup.product / r.kWhDay).toBeGreaterThan(0.5)
   })
-  it('data center: só cargas diretas', () => {
+  it('data center: direct loads only', () => {
     const sc = createScenario('data_center', 't')
     const r = computeLoad(sc)
     expect(r.byGroup.transmission).toBe(0)

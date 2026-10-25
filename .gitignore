@@ -1,11 +1,11 @@
-# dependências e build
+# dependencies and build output
 node_modules/
 dist/
 dist-ssr/
 coverage/
 *.tsbuildinfo
 
-# segredos e ambiente — NUNCA versionar
+# secrets and local environment, never commit these
 .env
 .env.*
 !.env.example
@@ -14,7 +14,7 @@ coverage/
 .wrangler/
 .dev.vars
 
-# editores / SO
+# editors / OS
 .vscode/*
 !.vscode/extensions.json
 .idea/
@@ -23,7 +23,7 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# python (gerador de tabelas)
+# python (table generator)
 __pycache__/
 *.pyc
 .venv/

@@ -1,5 +1,5 @@
-// Propriedades termodinâmicas dos refrigerantes por interpolação em tabelas geradas com CoolProp
-// (tools/gen_tables.py). Unidades: P kPa, T K, h kJ/kg, s kJ/(kg·K), rho kg/m³.
+// Refrigerant properties interpolated from tables generated with CoolProp (tools/gen_tables.py).
+// Units: P kPa, T K, h kJ/kg, s kJ/(kg·K), rho kg/m³.
 import type { Region, StatePoint } from './types'
 
 export interface SatTable {
@@ -50,9 +50,7 @@ export interface VaporState {
   clamped?: boolean
 }
 
-// ---------- utilidades numéricas ----------
-
-/** Índices e fator de interpolação para x em xs (crescente). Fora da faixa: fixa nas bordas. */
+/** Bracketing indices and interpolation factor for x in ascending xs, clamped at the ends. */
 function bracket(xs: number[], x: number): [number, number, number] {
   const n = xs.length
   if (n < 2) return [0, 0, 0]
@@ -76,7 +74,7 @@ function interp(xs: number[], ys: number[], x: number): number {
   return lerp(ys[i0], ys[i1], t)
 }
 
-/** Interpolação inversa em uma linha monotônica crescente (ys → xs). */
+/** Inverse lookup on a monotonically increasing row (ys → xs). */
 function invRow(ys: number[], xs: number[], y: number): number | 'below' | 'above' {
   if (y < ys[0]) return 'below'
   if (y > ys[ys.length - 1]) return 'above'
@@ -92,7 +90,7 @@ interface RowPt {
   clamped: boolean
 }
 
-/** Avalia uma linha (pressão fixa) em coordenadas relativas ao primeiro ponto, por T, s ou h. */
+/** Evaluates a constant-pressure row by T, s or h, relative to its first point. */
 function rowEval(row: ShRow, by: 'T' | 's' | 'h', value: number): RowPt {
   const n = row.T.length
   const xs = by === 'T' ? row.T : by === 's' ? row.s : row.h
@@ -103,7 +101,7 @@ function rowEval(row: ShRow, by: 'T' | 's' | 'h', value: number): RowPt {
   if (value <= xs[0]) {
     i0 = 0
     i1 = 1
-    t = (value - xs[0]) / (xs[1] - xs[0]) // extrapolação leve abaixo (≈ saturação)
+    t = (value - xs[0]) / (xs[1] - xs[0]) // small extrapolation below the first point (≈ saturation)
     if (t < -0.05) {
       t = 0
       clamped = true
@@ -123,8 +121,6 @@ function rowEval(row: ShRow, by: 'T' | 's' | 'h', value: number): RowPt {
   const r = t >= 0 && t <= 1 ? lerpLog(row.r[i0], row.r[i1], t) : Math.max(1e-6, lerp(row.r[i0], row.r[i1], t))
   return { dT: T - row.T[0], dh: h - row.h[0], ds: s - row.s[0], rr: r / row.r[0], clamped }
 }
-
-// ---------- classe Fluid ----------
 
 export class Fluid {
   readonly id: string
@@ -155,7 +151,7 @@ export class Fluid {
     this.PmaxSat = table.sat.P[table.sat.P.length - 1]
   }
 
-  /** Faixa útil de temperatura de orvalho (K). */
+  /** Usable dew temperature range, K. */
   get TdMin(): number {
     return this.sat.Td[0]
   }
@@ -163,7 +159,7 @@ export class Fluid {
     return this.sat.Td[this.sat.Td.length - 1]
   }
 
-  /** Estado de saturação a uma pressão (kPa). null se fora da faixa de saturação (super/crítico). */
+  /** Saturation state at P (kPa); null outside the saturation table, e.g. above the critical point. */
   satAtP(P: number): SatState | null {
     if (P > this.PmaxSat || P < this.PminSat * 0.999) return null
     const lp = Math.log(P)
@@ -182,11 +178,11 @@ export class Fluid {
     }
   }
 
-  /** Pressão de orvalho (kPa) para T (K). */
+  /** Dew pressure (kPa) at T (K). */
   pDew(T: number): number {
     return Math.exp(interp(this.sat.Td, this.satLogP, T))
   }
-  /** Pressão de bolha (kPa) para T (K). */
+  /** Bubble pressure (kPa) at T (K). */
   pBubble(T: number): number {
     return Math.exp(interp(this.sat.Tb, this.satLogP, T))
   }
@@ -196,13 +192,13 @@ export class Fluid {
   tBubble(P: number): number {
     return interp(this.satLogP, this.sat.Tb, Math.log(P))
   }
-  /** Deslizamento de temperatura (K) à pressão P. */
+  /** Temperature glide (K) at P. */
   glide(P: number): number {
     const s = this.satAtP(P)
     return s ? Math.max(0, s.Td - s.Tb) : 0
   }
 
-  /** Líquido (sub-resfriado) a T (K): entalpia de bolha em T + correção de pressão. */
+  /** Subcooled liquid at T (K): bubble-point enthalpy at T plus a v·ΔP pressure correction. */
   liquid(T: number, P?: number): VaporState {
     const Tb = Math.min(Math.max(T, this.sat.Tb[0]), this.sat.Tb[this.sat.Tb.length - 1])
     const h0 = interp(this.sat.Tb, this.sat.hl, Tb)
@@ -213,7 +209,7 @@ export class Fluid {
     return { T, h: h0 + dh, s: s0, rho, clamped: Tb !== T }
   }
 
-  /** Combina duas linhas vizinhas em pressão; ancora na saturação quando ambas são subcríticas. */
+  /** Blends the two neighboring pressure rows, anchored to saturation when both are subcritical. */
   private combine(P: number, by: 'T' | 's' | 'h', value: number): VaporState {
     const lp = Math.log(P)
     const [i0, i1, t] = bracket(this.shLogP, lp)
@@ -221,7 +217,7 @@ export class Fluid {
     const r1 = this.sh.rows[i1]
     const sat = this.sh.P[i1] <= this.PmaxSat ? this.satAtP(P) : null
     if (sat) {
-      // coordenadas relativas à saturação (ΔT, Δh, Δs) variam suavemente com P
+      // offsets from saturation (ΔT, Δh, Δs) vary smoothly with P
       const rel = by === 'T' ? value - sat.Td : by === 's' ? value - sat.sv : value - sat.hv
       const a = rowEval(r0, by, (by === 'T' ? r0.T[0] : by === 's' ? r0.s[0] : r0.h[0]) + rel)
       const b = rowEval(r1, by, (by === 'T' ? r1.T[0] : by === 's' ? r1.s[0] : r1.h[0]) + rel)
@@ -233,7 +229,7 @@ export class Fluid {
         clamped: a.clamped || b.clamped,
       }
     }
-    // região supercrítica (ou acima da faixa de saturação): coordenadas absolutas
+    // supercritical or above the saturation table: absolute coordinates
     const a = rowEval(r0, by, value)
     const b = rowEval(r1, by, value)
     return {
@@ -245,13 +241,13 @@ export class Fluid {
     }
   }
 
-  /** Vapor superaquecido / fluido supercrítico a (P, T). */
+  /** Superheated vapor or supercritical fluid at (P, T). */
   vapor(P: number, T: number): VaporState {
     const v = this.combine(P, 'T', T)
     return { ...v, T }
   }
 
-  /** Estado a (P, s): superaquecido, ou bifásico se s < s_vapor saturado. */
+  /** State at (P, s): two-phase up to saturated-vapor entropy, superheated above it. */
   stateFromPS(P: number, s: number): VaporState {
     const sat = this.satAtP(P)
     if (sat && s <= sat.sv) {
@@ -264,7 +260,7 @@ export class Fluid {
     return { ...v, s }
   }
 
-  /** Estado a (P, h): líquido, bifásico ou vapor. */
+  /** State at (P, h): liquid, two-phase or vapor. */
   stateFromPH(P: number, h: number): VaporState & { region: Region } {
     const sat = this.satAtP(P)
     if (sat) {
@@ -284,12 +280,11 @@ export class Fluid {
     return { ...v, h, region: sat ? 'sh' : 'sc' }
   }
 
-  /** Cria um ponto de estado padronizado. */
   point(id: string, P: number, st: VaporState, region: Region): StatePoint {
     return { id, P, T: st.T, h: st.h, s: st.s, rho: st.rho, x: st.x, region }
   }
 
-  /** Curvas de saturação para o diagrama p-h: [h, P] líquido e vapor. */
+  /** Saturation dome for the p-h chart, as [h, P] pairs for liquid and vapor. */
   dome(): { liquid: [number, number][]; vapor: [number, number][] } {
     const s = this.sat
     const liquid: [number, number][] = s.P.map((P, i) => [s.hl[i], P])
@@ -297,7 +292,7 @@ export class Fluid {
     return { liquid, vapor }
   }
 
-  /** Isoterma (K) no diagrama p-h: pontos [h, P] da região de líquido, bifásica e vapor. */
+  /** Isotherm (K) on the p-h chart, as [h, P] points across the liquid, two-phase and vapor regions. */
   isotherm(T: number): [number, number][] {
     const pts: [number, number][] = []
     const subcritical = T < this.Tcrit - 0.5 && T >= this.sat.Td[0] && T <= this.TdMax
@@ -322,13 +317,13 @@ export class Fluid {
     return pts
   }
 
-  /** Grade de pressões da tabela (para desenhar curvas). */
+  /** Pressure grid of the superheat table, used to draw curves. */
   get pressureGrid(): number[] {
     return this.sh.P
   }
 }
 
-// ---------- carregamento preguiçoso das tabelas ----------
+// one lazy chunk per fluid table
 
 const modules = import.meta.glob<{ default: FluidTable }>('../data/tables/R*.json')
 const cache = new Map<string, Promise<Fluid>>()
@@ -349,7 +344,7 @@ export function loadFluid(id: string): Promise<Fluid> {
   let p = cache.get(key)
   if (!p) {
     const loader = modules[key]
-    if (!loader) return Promise.reject(new Error(`Fluido sem tabela: ${id}`))
+    if (!loader) return Promise.reject(new Error(`No property table for ${id}`))
     p = loader().then((m) => {
       const f = new Fluid(m.default)
       resolved.set(id, f)

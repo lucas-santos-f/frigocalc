@@ -24,7 +24,7 @@ function roundTo(v: number, digits: number): number {
   return Math.round(v * p) / p
 }
 
-/** Campo numérico com conversão automática de unidades (valor interno sempre em SI). */
+// Values are stored in SI; the field converts to and from the selected unit system.
 export function NumberField({ label, value, onChange, quantity, unit, step, min, max, digits = 2, nullable, autoHint, title }: NumberFieldProps) {
   const sys = useStore((s) => s.units)
   const t = useT()
@@ -54,7 +54,7 @@ export function NumberField({ label, value, onChange, quantity, unit, step, min,
   return (
     <div className="field" title={title}>
       <label>
-        <span>{label}</span>
+        <span title={label}>{label}</span>
         {nullable && value !== null && (
           <button type="button" className="auto-link" onClick={() => onChange(null)}>
             {t('common.auto')}
@@ -92,7 +92,7 @@ export function SelectField<T extends string>({ label, value, onChange, options 
   return (
     <div className="field">
       <label>
-        <span>{label}</span>
+        <span title={label}>{label}</span>
       </label>
       <select value={value} onChange={(e) => onChange(e.target.value as T)}>
         {options.map((o) => (
@@ -108,7 +108,7 @@ export function SelectField<T extends string>({ label, value, onChange, options 
 export function CheckField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="field">
-      <label>
+      <label aria-hidden="true">
         <span>&nbsp;</span>
       </label>
       <label className="check">
@@ -123,7 +123,7 @@ export function TextField({ label, value, onChange, maxLength = 120 }: { label: 
   return (
     <div className="field">
       <label>
-        <span>{label}</span>
+        <span title={label}>{label}</span>
       </label>
       <input type="text" value={value} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} />
     </div>
@@ -132,14 +132,16 @@ export function TextField({ label, value, onChange, maxLength = 120 }: { label: 
 
 export function Card({ title, hint, right, children, className }: { title?: ReactNode; hint?: ReactNode; right?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`card ${className ?? ''}`}>
-      {title && (
-        <h2>
-          <span>{title}</span>
+    <section className={className ? `card ${className}` : 'card'}>
+      {(title || hint || right) && (
+        <div className="card-head">
+          <div>
+            {title && <h2>{title}</h2>}
+            {hint && <div className="hint">{hint}</div>}
+          </div>
           {right}
-        </h2>
+        </div>
       )}
-      {hint && <div className="hint">{hint}</div>}
       {children}
     </section>
   )

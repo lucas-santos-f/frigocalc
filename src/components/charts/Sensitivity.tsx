@@ -25,7 +25,7 @@ export function SensitivityChart({ data, xLabel, current }: { data: SweepPoint[]
       tooltip: { trigger: 'axis' },
       xAxis: { type: 'category', data: xs, name: `${xLabel} (${unitLabel('temp', sys)})`, nameLocation: 'middle', nameGap: 26, axisLabel: { color: c.muted }, axisLine: { lineStyle: { color: c.grid } } },
       yAxis: [
-        { type: 'value', name: t('cyc.cop'), axisLabel: { color: c.muted }, splitLine: { lineStyle: { color: c.grid, opacity: 0.5 } } },
+        { type: 'value', name: t('cyc.cop'), axisLabel: { color: c.muted }, splitLine: { lineStyle: { color: c.grid, type: 'dashed' } } },
         { type: 'value', name: unitLabel('power', sys), axisLabel: { color: c.muted }, splitLine: { show: false } },
       ],
       series: [

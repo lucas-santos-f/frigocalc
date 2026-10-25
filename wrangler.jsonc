@@ -1,6 +1,6 @@
 {
-  // Cloudflare Workers (Static Assets) — publicação por `npm run deploy` ou via GitHub Actions.
-  // O arquivo public/_headers é respeitado pelos Static Assets (CSP, HSTS etc.).
+  // Cloudflare Workers Static Assets, deployed with `npm run deploy` or from GitHub Actions.
+  // Static Assets applies public/_headers (CSP, HSTS, etc.).
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "frigocalc",
   // Served from the account's workers.dev subdomain (frioeclima.workers.dev).

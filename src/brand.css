@@ -1,0 +1,10 @@
+:root {
+  --accent: #2563eb;
+  --accent-2: #06b6d4;
+  --accent-ink: #1d4ed8;
+}
+:root[data-theme='dark'] {
+  --accent: #3b82f6;
+  --accent-2: #22d3ee;
+  --accent-ink: #93c5fd;
+}

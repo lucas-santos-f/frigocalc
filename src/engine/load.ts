@@ -1,4 +1,4 @@
-// Carga térmica (ASHRAE Handbook — Refrigeration, cap. "Refrigeration Load"; NBR 16401 para ar de renovação).
+// Refrigeration load per the ASHRAE Refrigeration handbook ("Refrigeration Load" chapter); NBR 16401 for outdoor air.
 import type { Insulation, LoadGroup, LoadItem, LoadResult, Scenario, Warning } from './types'
 import { moistAir } from './psychro'
 
@@ -9,18 +9,18 @@ function uValue(ins: Insulation): number {
   return 1 / r
 }
 
-/** Renovações de ar por dia por abertura de portas (ajuste da tabela ASHRAE, uso médio). */
+/** Daily air changes from door openings, a curve fit of the ASHRAE table for average use. */
 export function autoAirChanges(volume: number, tInt: number): number {
   const n = 196 * Math.pow(Math.max(volume, 2), -0.534)
   return tInt < 0 ? n * 0.8 : n
 }
 
-/** Calor liberado por pessoa (W) em função da temperatura do ambiente (ASHRAE). */
+/** Heat released per person (W) as a function of room temperature (ASHRAE). */
 export function personHeat(tInt: number): number {
   return Math.max(120, 270 - 6 * tInt)
 }
 
-/** Variação de entalpia do produto (kJ/kg) entre tIn e tOut, com congelamento se cruzar tFreeze. */
+/** Product enthalpy drop (kJ/kg) from tIn to tOut, with latent heat when it crosses tFreeze. */
 export function productEnthalpyChange(p: { tIn: number; tOut: number; tFreeze: number; cpAbove: number; cpBelow: number; latent: number }): number {
   const { tIn, tOut, tFreeze, cpAbove, cpBelow, latent } = p
   if (tOut >= tIn) return 0
@@ -40,12 +40,11 @@ export function computeLoad(sc: Scenario): LoadResult {
   const roofArea = floorArea
   const volume = floorArea * room.height
 
-  const push = (key: string, labelKey: string, group: LoadGroup, kWhDay: number, hours = runHours, label?: string, detail?: string) => {
+  const push = (key: string, labelKey: string, group: LoadGroup, kWhDay: number, hours = runHours, label?: string, detail?: LoadItem['detail']) => {
     if (!(kWhDay > 0)) return
     items.push({ key, labelKey, label, group, kWhDay, kWAvg: kWhDay / 24, kWSizing: kWhDay / Math.max(hours, 0.5), detail })
   }
 
-  // ---------- transmissão ----------
   const surfaces: [string, Insulation, number, number][] = [
     ['walls', envelope.walls, wallArea, room.tExt],
     ['roof', envelope.roof, roofArea, room.tExt],
@@ -62,30 +61,28 @@ export function computeLoad(sc: Scenario): LoadResult {
     if (u > 0.35 && room.tInt < 5) warnings.push({ key: 'warn.insulation_thin', value: u })
   }
 
-  // ---------- infiltração ----------
   const airOut = moistAir(room.tExt, { rh: room.rhExt / 100 })
   const airIn = moistAir(room.tInt, { rh: room.rhInt / 100 })
-  const dh = Math.max(0, airOut.h - airIn.h) // kJ/kg ar seco
+  const dh = Math.max(0, airOut.h - airIn.h) // kJ/kg dry air
   if (infiltration.method === 'air_change') {
     const n = infiltration.airChangesPerDay ?? autoAirChanges(volume, room.tInt)
-    const massDay = (n * volume) / airOut.v // kg ar seco/dia
-    push('infiltration', 'load.infiltration_airchange', 'infiltration', (massDay * dh) / 3600, runHours, undefined, `${n.toFixed(1)} ren./dia`)
+    const massDay = (n * volume) / airOut.v // kg dry air per day
+    push('infiltration', 'load.infiltration_airchange', 'infiltration', (massDay * dh) / 3600, runHours, undefined, { key: 'detail.air_changes', value: n })
   } else {
     const A = infiltration.doorWidth * infiltration.doorHeight
     const rhoR = airIn.rho
     const rhoI = airOut.rho
     if (A > 0 && infiltration.doorOpenMinutesPerDay > 0 && rhoR > rhoI && dh > 0) {
       const fm = Math.pow(2 / (1 + Math.pow(rhoR / rhoI, 1 / 3)), 1.5)
-      const q = 0.221 * A * dh * rhoR * Math.sqrt(1 - rhoI / rhoR) * Math.sqrt(G * infiltration.doorHeight) * fm // kW com porta aberta
+      const q = 0.221 * A * dh * rhoR * Math.sqrt(1 - rhoI / rhoR) * Math.sqrt(G * infiltration.doorHeight) * fm // kW while the door is open
       const df = room.tExt - room.tInt > 11 ? 0.8 : 1.1
       const openSeconds = infiltration.doorOpenMinutesPerDay * 60 * Math.max(1, infiltration.doorCount)
       const e = Math.min(0.95, Math.max(0, infiltration.protectionEffectiveness))
       const kWh = (q * df * (1 - e) * openSeconds) / 3600
-      push('infiltration', 'load.infiltration_door', 'infiltration', kWh, runHours, undefined, `${q.toFixed(1)} kW porta aberta`)
+      push('infiltration', 'load.infiltration_door', 'infiltration', kWh, runHours, undefined, { key: 'detail.door_open', value: q })
     }
   }
 
-  // ---------- produto ----------
   for (const p of products) {
     const dhp = productEnthalpyChange(p) + Math.max(0, p.packagingFraction) * p.packagingCp * Math.max(0, p.tIn - p.tOut)
     const kWh = (p.massPerDay * dhp) / 3600
@@ -97,28 +94,24 @@ export function computeLoad(sc: Scenario): LoadResult {
     if (p.tOut < room.tInt - 0.5) warnings.push({ key: 'warn.product_below_room' })
   }
 
-  // ---------- cargas internas ----------
   push('people', 'load.people', 'internal', (internal.people * personHeat(room.tInt) * internal.peopleHours) / 1000)
   push('lighting', 'load.lighting', 'internal', (internal.lightingWPerM2 * floorArea * internal.lightingHours) / 1000)
   push('forklifts', 'load.forklifts', 'internal', internal.forklifts * internal.forkliftKW * internal.forkliftHours)
   push('equipment', 'load.equipment', 'internal', internal.otherEquipmentKW * internal.otherEquipmentHours)
   push('defrost', 'load.defrost', 'internal', (internal.defrostKW * internal.defrostMinutesPerDay * internal.defrostHeatFraction) / 60)
 
-  // ---------- ar de renovação ----------
   if (ventilation.airflowM3h > 0 && dh > 0) {
     const massH = ventilation.airflowM3h / airOut.v
     push('ventilation', 'load.ventilation', 'ventilation', (massH * dh * 24) / 3600, 24, undefined, `${ventilation.airflowM3h.toFixed(0)} m³/h`)
   }
 
-  // ---------- cargas diretas ----------
   for (const d of directLoads) push(`direct_${d.id}`, 'load.direct', 'direct', d.kW * d.hours, Math.min(runHours, d.hours), d.name)
 
-  // ---------- ventiladores dos evaporadores (podem ser estimados) ----------
+  // evaporator fans go last: unless given, they are estimated as 4 % of everything above
   const subtotalSizing = items.reduce((a, i) => a + i.kWSizing, 0)
   const evapFanKW = internal.evapFanKW ?? Math.round(subtotalSizing * 0.04 * 100) / 100
   push('fans', 'load.fans', 'internal', evapFanKW * internal.evapFanHours, runHours, undefined, internal.evapFanKW === null ? 'auto 4 %' : undefined)
 
-  // ---------- totais ----------
   const byGroup: Record<LoadGroup, number> = { transmission: 0, infiltration: 0, product: 0, internal: 0, ventilation: 0, direct: 0 }
   for (const i of items) byGroup[i.group] += i.kWhDay
   const kWhDay = items.reduce((a, i) => a + i.kWhDay, 0)

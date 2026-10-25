@@ -1,5 +1,5 @@
-// Validação estrita de cenários (importação de arquivo, links de compartilhamento e localStorage).
-// Toda entrada externa passa por aqui antes de chegar ao motor de cálculo.
+// Strict scenario validation. Imported files, share links and localStorage all go through
+// here before anything reaches the engine.
 import { z } from 'zod'
 import type { Scenario } from '../engine/types'
 
@@ -19,7 +19,7 @@ const insulation = z.object({
 export const scenarioSchema = z.object({
   id,
   name: shortText.min(1),
-  application: z.enum(['camara_resfriados', 'camara_congelados', 'tunel_congelamento', 'frigorifico_carcacas', 'sala_processo', 'supermercado', 'industria_quimica', 'data_center', 'personalizado']),
+  application: z.enum(['chilled_storage', 'frozen_storage', 'blast_freezer', 'carcass_chilling', 'process_room', 'supermarket', 'chemical_plant', 'data_center', 'custom']),
   createdAt: z.string().max(40),
   updatedAt: z.string().max(40),
   notes: z.string().max(4000),

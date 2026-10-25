@@ -1,17 +1,19 @@
-// Exportação CSV (abre no Excel) dos resultados do cenário atual.
+// CSV export of the current scenario. Separators follow the UI language so the file opens
+// cleanly in a spreadsheet using that locale (pt-BR expects ';' and decimal commas).
 import type { Computed } from './hooks'
 import type { Scenario } from './engine/types'
+import type { Lang } from './i18n'
 import type { TFn } from './hooks'
 import { downloadBlob, safeFileName } from './state/store'
 
 const K0 = 273.15
 
-function csvEscape(v: string | number): string {
-  const s = typeof v === 'number' ? v.toLocaleString('pt-BR', { maximumFractionDigits: 3, useGrouping: false }) : v
-  return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+function csvCell(v: string | number, lang: Lang, sep: string): string {
+  const s = typeof v === 'number' ? v.toLocaleString(lang, { maximumFractionDigits: 3, useGrouping: false }) : v
+  return s.includes(sep) || /["\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 
-export function buildCsv(sc: Scenario, c: Computed, t: TFn): string {
+export function buildCsv(sc: Scenario, c: Computed, t: TFn, lang: Lang = 'en'): string {
   const rows: (string | number)[][] = []
   rows.push([t('scenario.title'), sc.name])
   rows.push([t('scenario.application'), t(`application.${sc.application}`)])
@@ -60,9 +62,10 @@ export function buildCsv(sc: Scenario, c: Computed, t: TFn): string {
     rows.push([t('plant.vent_emergency') + ' (m³/h)', p.refrigerant.ventilationEmergencyM3h])
     rows.push([t('plant.area') + ' (m²)', p.refrigerant.machineRoomAreaM2])
   }
-  return '﻿' + rows.map((r) => r.map(csvEscape).join(';')).join('\r\n')
+  const sep = lang === 'pt-BR' ? ';' : ','
+  return '﻿' + rows.map((r) => r.map((v) => csvCell(v, lang, sep)).join(sep)).join('\r\n')
 }
 
-export function exportCsv(sc: Scenario, c: Computed, t: TFn): void {
-  downloadBlob(new Blob([buildCsv(sc, c, t)], { type: 'text/csv;charset=utf-8' }), `${safeFileName(sc.name)}.csv`)
+export function exportCsv(sc: Scenario, c: Computed, t: TFn, lang: Lang): void {
+  downloadBlob(new Blob([buildCsv(sc, c, t, lang)], { type: 'text/csv;charset=utf-8' }), `${safeFileName(sc.name)}.csv`)
 }

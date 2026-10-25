@@ -1,5 +1,5 @@
-// Ciclo de refrigeração por compressão de vapor: estágio simples, duplo estágio com resfriador intermediário
-// de injeção total (flash intercooler), cascata (dois fluidos) e CO₂ transcrítico.
+// Vapor-compression cycle: single stage, two stage with an open flash intercooler,
+// cascade (two refrigerants) and transcritical CO₂.
 import type { CompressorType, CycleInput, CycleResult, StageResult, StatePoint, Warning } from './types'
 import type { Fluid } from './props'
 
@@ -10,7 +10,7 @@ export interface Efficiencies {
   etaVol: number
 }
 
-/** Estimativa de rendimento isentrópico e volumétrico em função do tipo de compressor e da razão de pressões. */
+/** Rough isentropic and volumetric efficiencies from compressor type and pressure ratio. */
 export function compressorEfficiencies(type: CompressorType, pr: number, etaIsOverride: number | null, etaVolOverride: number | null): Efficiencies {
   const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
   let etaIs: number
@@ -33,7 +33,7 @@ export function compressorEfficiencies(type: CompressorType, pr: number, etaIsOv
   return { etaIs, etaVol }
 }
 
-/** Pressão ótima de gas cooler (bar abs) para CO₂ transcrítico — correlação de Liao, Zhao & Jakobsen (2000). */
+/** Optimal gas cooler pressure for transcritical CO₂, bar(a). Correlation from Liao, Zhao & Jakobsen (2000). */
 export function optimalGasCoolerPressureBar(tEvapC: number, tGcOutC: number): number {
   const p = (2.778 - 0.0157 * tEvapC) * tGcOutC + 0.381 * tEvapC - 9.34
   return Math.min(140, Math.max(75, p))
@@ -51,9 +51,9 @@ interface StageOpts {
   Q: number // kW
   name: string
   idPrefix: string
-  transcritical?: { Tgc: number } // K — saída do gas cooler
-  suctionState?: StatePoint // estado de sucção imposto (duplo estágio HP)
-  liquidState?: StatePoint // estado do líquido antes da expansão imposto
+  transcritical?: { Tgc: number } // gas cooler outlet, K
+  suctionState?: StatePoint // forced suction state (HP stage of a two-stage system)
+  liquidState?: StatePoint // forced liquid state ahead of the expansion valve
 }
 
 interface StageOut {
@@ -76,7 +76,7 @@ function stageCore(o: StageOpts): StageOut {
   const satE = f.satAtP(o.Pe)
   if (!satE) throw new Error('evap_out_of_range')
 
-  // 1 — sucção
+  // 1: suction
   let s1: StatePoint
   if (o.suctionState) s1 = { ...o.suctionState, id: `${o.idPrefix}1` }
   else if (o.superheat <= 0.01) s1 = { id: `${o.idPrefix}1`, P: o.Pe, T: satE.Td, h: satE.hv, s: satE.sv, rho: satE.rv, region: 'sat_v' }
@@ -88,14 +88,14 @@ function stageCore(o: StageOpts): StageOut {
   const pr = o.Pc / o.Pe
   const eff = compressorEfficiencies(o.type, pr, o.etaIsOverride, o.etaVolOverride)
 
-  // 2 — descarga (isentrópica corrigida pelo rendimento)
+  // 2: discharge (isentropic enthalpy rise / etaIs)
   const s2s = f.stateFromPS(o.Pc, s1.s)
   const h2 = s1.h + (s2s.h - s1.h) / eff.etaIs
   const st2 = f.stateFromPH(o.Pc, h2)
   const s2 = f.point(`${o.idPrefix}2`, o.Pc, st2, st2.region)
   if (st2.x !== undefined && st2.x < 1) warnings.push({ key: 'warn.wet_compression' })
 
-  // 3 — líquido na saída do condensador / gas cooler
+  // 3: condenser / gas cooler outlet
   let s3: StatePoint
   if (o.liquidState) s3 = { ...o.liquidState, id: `${o.idPrefix}3` }
   else if (o.transcritical) {
@@ -112,7 +112,7 @@ function stageCore(o: StageOpts): StageOut {
     }
   }
 
-  // 4 — após expansão isentálpica
+  // 4: after isenthalpic expansion
   const st4 = f.stateFromPH(o.Pe, s3.h)
   const s4 = f.point(`${o.idPrefix}4`, o.Pe, st4, st4.region)
 
@@ -149,7 +149,7 @@ export interface CycleFluids {
   ht?: Fluid
 }
 
-/** Calcula o ciclo completo para a carga Q (kW) no evaporador. Lança Error com chave i18n em caso de entrada inválida. */
+/** Solves the cycle for an evaporator load Q (kW). Invalid input throws an Error whose message is an i18n key. */
 export function computeCycle(input: CycleInput, Q: number, fluids: CycleFluids): CycleResult {
   const f = fluids.main
   const Te = input.tEvap + K0
@@ -158,14 +158,13 @@ export function computeCycle(input: CycleInput, Q: number, fluids: CycleFluids):
   const warnings: Warning[] = []
   const common = { fluid: f, Pe, superheat: input.superheat, subcooling: input.subcooling, type: input.compressorType, etaIsOverride: input.etaIsOverride, etaVolOverride: input.etaVolOverride }
 
-  // ---------- CO₂ transcrítico ----------
   if (input.system === 'transcritical') {
     const Tgc = input.transcritical.tGasCoolerOut + K0
     if (!f.critExact || f.Tcrit > 320) warnings.push({ key: 'warn.transcritical_fluid' })
     let Pc = (input.transcritical.pGasCooler ?? optimalGasCoolerPressureBar(input.tEvap, input.transcritical.tGasCoolerOut)) * 100
     let transcritical: StageOpts['transcritical'] | undefined = { Tgc }
     if (Tgc < f.Tcrit - 2 && input.transcritical.pGasCooler === null) {
-      // ambiente frio: opera subcrítico, condensando ~2 K acima da saída
+      // cold ambient: run subcritical, condensing ~2 K above the gas cooler outlet temperature
       Pc = f.pDew(Tgc + 2)
       transcritical = undefined
       warnings.push({ key: 'warn.co2_subcritical_mode' })
@@ -198,17 +197,15 @@ export function computeCycle(input: CycleInput, Q: number, fluids: CycleFluids):
     }
   }
 
-  // ---------- cascata (a condensação pertence ao fluido de alta) ----------
+  // in a cascade, tCond belongs to the high-temperature refrigerant
   const Tc = input.tCond + K0
   if (input.system === 'cascade') return computeCascade(input, Q, fluids, Te, Pe, Tc, warnings)
 
-  // ---------- pressão de condensação ----------
   if (Tc <= Te + 2) throw new Error('cond_below_evap')
   if (Tc > f.TdMax - 0.5) throw new Error('cond_above_critical')
   const Pc = f.pDew(Tc)
   if (f.id === 'R744' && input.tCond > 22) warnings.push({ key: 'warn.co2_needs_transcritical' })
 
-  // ---------- estágio simples ----------
   if (input.system === 'single') {
     const st = stageCore({ ...common, Pc, Q, name: 'single', idPrefix: '' })
     const cop = Q / st.W
@@ -235,7 +232,7 @@ export function computeCycle(input: CycleInput, Q: number, fluids: CycleFluids):
     }
   }
 
-  // ---------- duplo estágio (resfriador intermediário de injeção total) ----------
+  // two stage with an open flash intercooler
   {
     const Pint = input.tInter !== null ? f.pDew(input.tInter + K0) : Math.sqrt(Pe * Pc)
     if (Pint <= Pe * 1.05 || Pint >= Pc * 0.95) throw new Error('inter_out_of_range')
@@ -244,26 +241,26 @@ export function computeCycle(input: CycleInput, Q: number, fluids: CycleFluids):
     const satC = f.satAtP(Pc)
     if (!satC) throw new Error('cond_above_critical')
 
-    // líquido do condensador (5) → expansão para o intermediário (6) → líquido saturado intermediário (7)
+    // condenser liquid (5) is flashed to Pint (6); saturated liquid at Pint (7) feeds the LP stage
     const liq5 = input.subcooling > 0.01 ? f.liquid(satC.Tb - input.subcooling, Pc) : { T: satC.Tb, h: satC.hl, s: satC.sl, rho: satC.rl }
     const p5: StatePoint = { id: '5', P: Pc, T: liq5.T, h: liq5.h, s: liq5.s, rho: liq5.rho, region: input.subcooling > 0.01 ? 'liq' : 'sat_l' }
     const st6 = f.stateFromPH(Pint, p5.h)
     const p6: StatePoint = f.point('6', Pint, st6, st6.region)
     const p7: StatePoint = { id: '7', P: Pint, T: satI.Tb, h: satI.hl, s: satI.sl, rho: satI.rl, region: 'sat_l' }
 
-    // baixa pressão: 1 → 2 (Pint), líquido imposto = 7
+    // LP stage: 1 → 2 up to Pint, fed with liquid 7
     const lp = stageCore({ ...common, Pc: Pint, Q, name: 'LP', idPrefix: '', liquidState: p7 })
     const p1 = lp.s1
     const p2 = lp.s2
     const p8 = { ...lp.s4, id: '8' }
-    // alta pressão: sucção = vapor saturado no intermediário (3)
+    // HP stage: suction is saturated vapor at Pint (3)
     const p3: StatePoint = { id: '3', P: Pint, T: satI.Td, h: satI.hv, s: satI.sv, rho: satI.rv, region: 'sat_v' }
     const mdotHP = (lp.mdot * (p2.h - p7.h)) / (p3.h - p6.h)
     if (!(mdotHP > 0)) throw new Error('inter_out_of_range')
-    const hpQ = mdotHP * (p3.h - p6.h) // "capacidade" fictícia para reaproveitar stageCore
+    const hpQ = mdotHP * (p3.h - p6.h) // notional capacity, only so stageCore can be reused
     const hp = stageCore({ ...common, Pe: Pint, Pc, Q: hpQ, name: 'HP', idPrefix: 'h', suctionState: p3, liquidState: p5 })
     const p4 = { ...hp.s2, id: '4' }
-    // recalcula HP com a vazão correta (stageCore usou Q/(h3-h6) = mdotHP, consistente)
+    // stageCore already derived mdot = hpQ / (h3 - h6) = mdotHP; restate the HP figures from p3/p4
     const stageHP: StageResult = { ...hp.stage, mdot: mdotHP, Wshaft: mdotHP * (p4.h - p3.h), Vsuction: (mdotHP / p3.rho) * 3600, Vdisplacement: (mdotHP / p3.rho) * 3600 / hp.stage.etaVol }
     const W = lp.W + stageHP.Wshaft
     const Qcond = mdotHP * (p4.h - p5.h)
@@ -298,7 +295,6 @@ export function computeCycle(input: CycleInput, Q: number, fluids: CycleFluids):
 function computeCascade(input: CycleInput, Q: number, fluids: CycleFluids, Te: number, Pe: number, Tc: number, warnings: Warning[]): CycleResult {
   const f = fluids.main
   const common = { fluid: f, Pe, superheat: input.superheat, subcooling: input.subcooling, type: input.compressorType, etaIsOverride: input.etaIsOverride, etaVolOverride: input.etaVolOverride }
-  // ---------- cascata ----------
   const ht = fluids.ht
   if (!ht) throw new Error('cascade_fluid_missing')
   const Tcasc = input.cascade.tCascade + K0
@@ -358,7 +354,7 @@ function computeCascade(input: CycleInput, Q: number, fluids: CycleFluids, Te: n
   }
 }
 
-/** Varredura de sensibilidade: COP e potência em função de uma temperatura. */
+/** Sensitivity sweep: COP, shaft power and discharge temperature over tEvap or tCond. */
 export function sweep(input: CycleInput, Q: number, fluids: CycleFluids, param: 'tEvap' | 'tCond', values: number[]): { x: number; COP: number; W: number; Tdis: number }[] {
   const out: { x: number; COP: number; W: number; Tdis: number }[] = []
   for (const v of values) {
@@ -366,7 +362,7 @@ export function sweep(input: CycleInput, Q: number, fluids: CycleFluids, param: 
       const r = computeCycle({ ...input, [param]: v }, Q, fluids)
       out.push({ x: v, COP: r.COP, W: r.Wtotal, Tdis: Math.max(...r.stages.map((s) => s.Tdischarge)) - K0 })
     } catch {
-      // ponto fora da faixa — ignora
+      // out of range, skip the point
     }
   }
   return out

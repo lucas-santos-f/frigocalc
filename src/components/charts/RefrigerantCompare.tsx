@@ -28,7 +28,7 @@ export function CopBars({ rows, highlight }: { rows: CompareRow[]; highlight: st
       animation: false,
       grid: { left: 8, right: 50, top: 8, bottom: 8, containLabel: true },
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: (ps: { name: string; value: number }[]) => `${ps[0].name}: COP ${ps[0].value.toFixed(2)}` },
-      xAxis: { type: 'value', name: t('cyc.cop'), axisLabel: { color: c.muted }, splitLine: { lineStyle: { color: c.grid, opacity: 0.5 } } },
+      xAxis: { type: 'value', name: t('cyc.cop'), axisLabel: { color: c.muted }, splitLine: { lineStyle: { color: c.grid, type: 'dashed' } } },
       yAxis: { type: 'category', data: data.map((r) => r.id), axisLabel: { color: c.text, fontSize: 11 } },
       series: [
         {
@@ -40,11 +40,7 @@ export function CopBars({ rows, highlight }: { rows: CompareRow[]; highlight: st
       ],
     }
   }, [rows, highlight, t, theme])
-  return (
-    <div style={{ height: Math.max(240, 24 * rows.filter((r) => r.ok).length + 40) }}>
-      <EChart option={option} className="chart" />
-    </div>
-  )
+  return <EChart option={option} height={Math.max(240, 24 * rows.filter((r) => r.ok).length + 40)} />
 }
 
 export function CopGwpScatter({ rows, highlight }: { rows: CompareRow[]; highlight: string }) {
@@ -58,8 +54,8 @@ export function CopGwpScatter({ rows, highlight }: { rows: CompareRow[]; highlig
       animation: false,
       grid: { left: 52, right: 24, top: 24, bottom: 44 },
       tooltip: { trigger: 'item', formatter: (p: { data: { name: string; value: number[]; Tdis: number; safety: string } }) => `<b>${p.data.name}</b> (${p.data.safety})<br/>GWP ${p.data.value[0]} · COP ${p.data.value[1].toFixed(2)}<br/>${t('cyc.Tdis')}: ${p.data.Tdis.toFixed(0)} ${unitLabel('temp', sys)}` },
-      xAxis: { type: 'log', name: 'GWP (AR4)', nameLocation: 'middle', nameGap: 28, min: 0.5, axisLabel: { color: c.muted }, splitLine: { lineStyle: { color: c.grid, opacity: 0.5 } } },
-      yAxis: { type: 'value', name: t('cyc.cop'), axisLabel: { color: c.muted }, splitLine: { lineStyle: { color: c.grid, opacity: 0.5 } }, scale: true },
+      xAxis: { type: 'log', name: 'GWP (AR4)', nameLocation: 'middle', nameGap: 28, min: 0.5, axisLabel: { color: c.muted }, splitLine: { lineStyle: { color: c.grid, type: 'dashed' } } },
+      yAxis: { type: 'value', name: t('cyc.cop'), axisLabel: { color: c.muted }, splitLine: { lineStyle: { color: c.grid, type: 'dashed' } }, scale: true },
       series: [
         {
           type: 'scatter',
@@ -70,5 +66,5 @@ export function CopGwpScatter({ rows, highlight }: { rows: CompareRow[]; highlig
       ],
     }
   }, [rows, highlight, t, theme, sys])
-  return <EChart option={option} className="chart" />
+  return <EChart option={option} className="chart tall" />
 }

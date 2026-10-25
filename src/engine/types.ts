@@ -1,16 +1,16 @@
-// Tipos centrais do motor de cálculo. Unidades internas: SI (kW, °C na entrada do usuário, K dentro do motor
-// termodinâmico, kPa, kJ/kg, kJ/(kg·K), kg/m³, m, m², m³).
+// Core engine types. Internal units are SI: kW, °C for user input, K inside the thermodynamic code,
+// kPa, kJ/kg, kJ/(kg·K), kg/m³, m, m², m³.
 
 export type ApplicationId =
-  | 'camara_resfriados'
-  | 'camara_congelados'
-  | 'tunel_congelamento'
-  | 'frigorifico_carcacas'
-  | 'sala_processo'
-  | 'supermercado'
-  | 'industria_quimica'
+  | 'chilled_storage'
+  | 'frozen_storage'
+  | 'blast_freezer'
+  | 'carcass_chilling'
+  | 'process_room'
+  | 'supermarket'
+  | 'chemical_plant'
   | 'data_center'
-  | 'personalizado'
+  | 'custom'
 
 export type SystemType = 'single' | 'two_stage' | 'cascade' | 'transcritical'
 export type CompressorType = 'reciprocating' | 'screw' | 'scroll'
@@ -23,20 +23,20 @@ export interface Room {
   height: number // m
   tInt: number // °C
   rhInt: number // %
-  tExt: number // °C (ar ambiente ao redor da câmara / sala)
+  tExt: number // °C, ambient air around the room
   rhExt: number // %
-  tGround: number // °C (solo / piso sob a câmara)
-  runHours: number // h/dia de funcionamento do sistema (16–20)
-  safetyFactor: number // % acrescido ao total
+  tGround: number // °C, ground / slab under the room
+  runHours: number // h/day the plant runs (typically 16–20)
+  safetyFactor: number // %, added on top of the total
 }
 
 export interface Insulation {
   enabled: boolean
-  k: number // W/(m·K) do isolante
+  k: number // W/(m·K), insulation conductivity
   thickness: number // mm
-  rSurfaces: number // m²·K/W (resistências superficiais interna + externa, ~0,17)
-  tExtOverride: number | null // °C — se null usa room.tExt (ou tGround no piso)
-  solarAdd: number // K adicionais por insolação
+  rSurfaces: number // m²·K/W, inside + outside surface resistances (~0.17)
+  tExtOverride: number | null // °C; null uses room.tExt (tGround for the floor)
+  solarAdd: number // K added for solar exposure
 }
 
 export interface Envelope {
@@ -47,37 +47,37 @@ export interface Envelope {
 
 export interface Infiltration {
   method: InfiltrationMethod
-  airChangesPerDay: number | null // null = automático pelo volume (ASHRAE)
+  airChangesPerDay: number | null // null = estimated from room volume (ASHRAE)
   doorCount: number
   doorWidth: number // m
   doorHeight: number // m
-  doorOpenMinutesPerDay: number // min/dia (soma de todas as aberturas por porta)
-  protectionEffectiveness: number // 0–1 (cortina de ar / tiras: 0,5–0,9)
+  doorOpenMinutesPerDay: number // min/day per door, all openings added up
+  protectionEffectiveness: number // 0–1 (air curtain or strip curtain: 0.5–0.9)
 }
 
 export interface ProductLoad {
   id: string
   name: string
-  massPerDay: number // kg/dia que entram
+  massPerDay: number // kg/day brought in
   tIn: number // °C
-  tOut: number // °C (normalmente = tInt)
-  cpAbove: number // kJ/(kg·K) acima do congelamento
-  cpBelow: number // kJ/(kg·K) abaixo do congelamento
-  latent: number // kJ/kg calor latente de congelamento
-  tFreeze: number // °C ponto de congelamento
-  respiration: number // W/kg (frutas/hortaliças; 0 para os demais)
-  storedMass: number // kg em estoque (base da respiração)
-  pulldownHours: number // h para retirar o calor do lote (24 = regime diário)
-  packagingFraction: number // kg embalagem / kg produto
+  tOut: number // °C, usually tInt
+  cpAbove: number // kJ/(kg·K) above freezing
+  cpBelow: number // kJ/(kg·K) below freezing
+  latent: number // kJ/kg, latent heat of freezing
+  tFreeze: number // °C, freezing point
+  respiration: number // W/kg, fruit and vegetables only (0 otherwise)
+  storedMass: number // kg in storage, basis for respiration heat
+  pulldownHours: number // h to pull down a batch (24 = steady daily intake)
+  packagingFraction: number // kg packaging per kg product
   packagingCp: number // kJ/(kg·K)
 }
 
 export interface InternalLoads {
   people: number
-  peopleHours: number // h/dia
+  peopleHours: number // h/day
   lightingWPerM2: number
   lightingHours: number
-  evapFanKW: number | null // null = estimado (4 % da carga restante)
+  evapFanKW: number | null // null = estimated as 4 % of the other loads
   evapFanHours: number
   forklifts: number
   forkliftKW: number
@@ -86,55 +86,55 @@ export interface InternalLoads {
   otherEquipmentHours: number
   defrostKW: number
   defrostMinutesPerDay: number
-  defrostHeatFraction: number // 0–1 fração do calor do degelo que entra na câmara
+  defrostHeatFraction: number // 0–1, share of defrost heat that ends up in the room
 }
 
 export interface DirectLoad {
   id: string
   name: string
   kW: number
-  hours: number // h/dia
+  hours: number // h/day
 }
 
 export interface Ventilation {
-  airflowM3h: number // m³/h de ar externo (renovação)
+  airflowM3h: number // m³/h of outdoor air
 }
 
 export interface CascadeInput {
   refrigerantHT: string
-  tCascade: number // °C condensação do estágio de baixa (LT)
-  dtCascade: number // K aproximação no trocador cascata
+  tCascade: number // °C, LT stage condensing temperature
+  dtCascade: number // K, cascade heat exchanger approach
 }
 
 export interface TranscriticalInput {
-  tGasCoolerOut: number // °C saída do gas cooler
-  pGasCooler: number | null // bar(a); null = pressão ótima estimada
+  tGasCoolerOut: number // °C, gas cooler outlet
+  pGasCooler: number | null // bar(a); null = estimated optimum
 }
 
 export interface CycleInput {
   refrigerant: string
   system: SystemType
-  tEvap: number // °C (orvalho)
-  tCond: number // °C (orvalho) — ignorado em transcrítico
+  tEvap: number // °C, dew point
+  tCond: number // °C, dew point; ignored for transcritical
   superheat: number // K
   subcooling: number // K
   compressorType: CompressorType
   etaIsOverride: number | null
   etaVolOverride: number | null
   motorEff: number // 0–1
-  tInter: number | null // °C intermediária (duplo estágio); null = automática
+  tInter: number | null // °C, two-stage intermediate; null = from √(Pe·Pc)
   cascade: CascadeInput
   transcritical: TranscriticalInput
 }
 
 export interface PlantInput {
-  nCompressors: number // em operação
+  nCompressors: number // running, standby not included
   standby: boolean // N+1
   condenserType: CondenserType
   powerFactor: number
-  voltage: number // V (trifásico)
-  chargeKgPerKW: number | null // null = padrão do fluido / sistema
-  machineRoomArea: number | null // m²; null = estimada
+  voltage: number // V, three-phase
+  chargeKgPerKW: number | null // null = refrigerant / system default
+  machineRoomArea: number | null // m²; null = estimated
 }
 
 export interface Scenario {
@@ -155,9 +155,9 @@ export interface Scenario {
   plant: PlantInput
 }
 
-// ---------- Resultados ----------
+// results
 
-/** Aviso com chave i18n e valor numérico opcional. */
+/** i18n warning key with an optional numeric value. */
 export interface Warning {
   key: string
   value?: number
@@ -167,22 +167,22 @@ export type LoadGroup = 'transmission' | 'infiltration' | 'product' | 'internal'
 
 export interface LoadItem {
   key: string
-  labelKey: string // chave i18n
-  label?: string // nome livre (produto / carga direta)
+  labelKey: string // i18n key
+  label?: string // user-given name (product or direct load)
   group: LoadGroup
   kWhDay: number
-  kWAvg: number // kWh/dia ÷ 24
-  kWSizing: number // kWh/dia ÷ horas efetivas (dimensionamento)
-  detail?: string
+  kWAvg: number // kWh/day ÷ 24
+  kWSizing: number // kWh/day ÷ effective hours, used for sizing
+  detail?: string | Warning // plain text, or an i18n key the UI fills in with value
 }
 
 export interface LoadResult {
   items: LoadItem[]
-  byGroup: Record<LoadGroup, number> // kWh/dia
+  byGroup: Record<LoadGroup, number> // kWh/day
   kWhDay: number
   kWAvg24: number
-  kWEquipmentBase: number // kWh/dia ÷ horas de funcionamento
-  kWEquipment: number // com fator de segurança
+  kWEquipmentBase: number // kWh/day ÷ run hours
+  kWEquipment: number // safety factor included
   safetyKW: number
   evapFanKW: number
   geometry: { volume: number; floorArea: number; wallArea: number; roofArea: number }
@@ -209,8 +209,8 @@ export interface StageResult {
   etaVol: number
   mdot: number // kg/s
   Wshaft: number // kW
-  Vsuction: number // m³/h real aspirado
-  Vdisplacement: number // m³/h deslocamento necessário
+  Vsuction: number // m³/h, actual suction volume flow
+  Vdisplacement: number // m³/h, required swept volume
   Tdischarge: number // K
   Psuction: number // kPa
   Pdischarge: number // kPa
@@ -220,11 +220,11 @@ export interface CycleResult {
   system: SystemType
   fluid: string
   points: StatePoint[]
-  path: StatePoint[] // polilinha para o diagrama p-h
+  path: StatePoint[] // polyline for the p-h chart
   stages: StageResult[]
   Qevap: number // kW
-  Wtotal: number // kW (eixo)
-  Qcond: number // kW (rejeição total, incluindo HT na cascata)
+  Wtotal: number // kW, shaft
+  Qcond: number // kW, total heat rejection (HT stage included for cascade)
   COP: number
   COPCarnot: number
   secondLawEff: number
@@ -232,10 +232,10 @@ export interface CycleResult {
   glideCond: number // K
   Pevap: number
   Pcond: number
-  Tevap: number // K orvalho
-  Tcond: number // K orvalho (ou saída do gas cooler no transcrítico)
+  Tevap: number // K, dew point
+  Tcond: number // K, dew point (gas cooler outlet for transcritical)
   warnings: Warning[]
-  ht?: CycleResult // estágio de alta da cascata (outro fluido)
+  ht?: CycleResult // cascade high stage, second refrigerant
 }
 
 export interface PlantResult {
@@ -269,7 +269,7 @@ export interface PlantResult {
     kVA: number
     amps: number
     transformerKVA: number
-    specificPower: number // kW_el / kW_frio
+    specificPower: number // kW_el per kW of cooling
   }
   refrigerant: {
     chargeKg: number

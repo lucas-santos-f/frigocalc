@@ -1,8 +1,8 @@
 name: Deploy Cloudflare
 
-# Publica no Cloudflare (Workers Static Assets) a cada push na main.
-# Requer os segredos CLOUDFLARE_API_TOKEN (permissão "Workers Scripts: Edit") e CLOUDFLARE_ACCOUNT_ID
-# cadastrados em Settings > Secrets and variables > Actions. Sem eles o job é pulado.
+# Deploys to Cloudflare Workers Static Assets on every push to main.
+# Needs the CLOUDFLARE_API_TOKEN ("Workers Scripts: Edit") and CLOUDFLARE_ACCOUNT_ID secrets under
+# Settings > Secrets and variables > Actions. The job is skipped unless the CF_DEPLOY_ENABLED variable is 'true'.
 
 on:
   push:
@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build e publicação
+    name: Build and deploy
     runs-on: ubuntu-latest
     if: ${{ vars.CF_DEPLOY_ENABLED == 'true' }}
     steps:
@@ -35,7 +35,7 @@ jobs:
       - run: npm ci --no-fund --no-audit
       - run: npm run build
 
-      - name: Publicar (wrangler deploy)
+      - name: Deploy with wrangler
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

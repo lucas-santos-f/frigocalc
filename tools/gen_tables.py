@@ -1,14 +1,14 @@
 """
-Gera tabelas de propriedades termodinamicas dos fluidos refrigerantes com CoolProp.
-Saida: src/data/tables/<fluido>.json (compacto) + src/data/tables/_reference.json (pontos de teste).
+Generate refrigerant property tables with CoolProp.
+Output: src/data/tables/<fluid>.json (compact) and src/data/tables/_reference.json (test points).
 
-Uso:  python tools/gen_tables.py [--only R134a,R717]
-Requer: pip install -r tools/requirements.txt  (CoolProp >= 6.6)
+Usage:  python tools/gen_tables.py [--only R134a,R717]
+Needs:  pip install -r tools/requirements.txt  (CoolProp >= 6.6)
 
-Convencoes:
-  P em kPa, T em K, h em kJ/kg, s em kJ/(kg.K), rho em kg/m3.
-  Tabela de saturacao indexada por pressao (Tb = bolha, Td = orvalho) para suportar misturas com deslizamento.
-  Grade de vapor superaquecido / supercritico indexada por pressao, cada linha com vetor de T a partir do orvalho.
+Conventions:
+  P in kPa, T in K, h in kJ/kg, s in kJ/(kg.K), rho in kg/m3.
+  The saturation table is indexed by pressure (Tb = bubble, Td = dew) so blends with glide work.
+  The superheated / supercritical grid is indexed by pressure; subcritical rows start at the dew point.
 """
 import json
 import math
@@ -23,7 +23,7 @@ OUT = os.path.normpath(os.path.join(HERE, "..", "src", "data", "tables"))
 os.makedirs(OUT, exist_ok=True)
 
 FLUIDS = {
-    # id : (backend, componentes, fracoes massicas)  -- fracoes None => fluido puro/pseudo-puro
+    # id: (backend, components, mass fractions); None means a pure or pseudo-pure fluid
     "R717": ("HEOS", "Ammonia", None),
     "R744": ("HEOS", "CarbonDioxide", None),
     "R290": ("HEOS", "Propane", None),
@@ -38,7 +38,7 @@ FLUIDS = {
     "R407C": ("HEOS", "R407C", None),
     "R410A": ("HEOS", "R410A", None),
     "R507A": ("HEOS", "R507A", None),
-    # misturas definidas por composicao massica (ASHRAE 34)
+    # blends defined by mass composition (ASHRAE 34)
     "R407F": ("HEOS", "R32&R125&R134a", [0.30, 0.30, 0.40]),
     "R448A": ("HEOS", "R32&R125&R1234yf&R134a&R1234ze(E)", [0.26, 0.26, 0.20, 0.21, 0.07]),
     "R449A": ("HEOS", "R32&R125&R1234yf&R134a", [0.243, 0.247, 0.253, 0.257]),
@@ -74,7 +74,7 @@ def make_state(backend, comps, fracs):
 
 
 def crit_estimate(state, comps, fracs):
-    """Ponto critico: direto para puros; para misturas, media massica dos componentes."""
+    """Critical point: exact for pure fluids, mass-weighted average of the components for blends."""
     if not fracs:
         try:
             tc, pc = state.T_critical(), state.p_critical()
@@ -114,7 +114,7 @@ def gen_fluid(fid, backend, comps, fracs):
         except Exception:
             continue
     if pmin is None:
-        raise RuntimeError(f"{fid}: nao foi possivel achar Pmin")
+        raise RuntimeError(f"{fid}: could not find Pmin")
     tsat_max = tc - (0.3 if exact else 6.0)
     pmax_sat = None
     for _ in range(80):
@@ -126,9 +126,9 @@ def gen_fluid(fid, backend, comps, fracs):
         except Exception:
             tsat_max -= 1.0
     if pmax_sat is None:
-        raise RuntimeError(f"{fid}: falha ao achar Pmax_sat")
+        raise RuntimeError(f"{fid}: could not find Pmax_sat")
 
-    # --- tabela de saturacao (log P) ---
+    # saturation table, log-spaced in P
     sat = {k: [] for k in ("P", "Tb", "Td", "hl", "hv", "sl", "sv", "rl", "rv")}
     logs = [math.log(pmin) + (math.log(pmax_sat) - math.log(pmin)) * i / (N_SAT - 1) for i in range(N_SAT)]
     for lp in logs:
@@ -150,7 +150,7 @@ def gen_fluid(fid, backend, comps, fracs):
         sat["rl"].append(rnd(rl, 3))
         sat["rv"].append(rnd(rv, 4))
 
-    # --- grade superaquecida / supercritica ---
+    # superheated / supercritical grid
     if exact:
         pmax_grid = pc * (2.0 if fid == "R744" else 1.3)
     else:
@@ -177,7 +177,7 @@ def gen_fluid(fid, backend, comps, fracs):
             except Exception:
                 continue
             if row["h"] and h <= row["h"][-1]:
-                continue  # garante monotonicidade de h em T
+                continue  # keep h monotonic in T
             row["T"].append(rnd(temp, 3))
             row["h"].append(rnd(h, 3))
             row["s"].append(rnd(s, 5))
@@ -200,7 +200,7 @@ def gen_fluid(fid, backend, comps, fracs):
 
 
 def gen_reference():
-    """Pontos de referencia para testes unitarios do interpolador e do ciclo."""
+    """Reference points for the interpolation and cycle unit tests."""
     ref = {}
     cases = [("R134a", 263.15, 313.15), ("R717", 253.15, 308.15), ("R744", 243.15, 268.15),
              ("R290", 263.15, 318.15), ("R404A", 243.15, 313.15)]
@@ -228,7 +228,7 @@ def gen_reference():
                     "hl_evap": hl_e, "h3_sc5": h3, "COP_ideal_SC5": (h1 - h3) / (h2s - h1)}
     with open(os.path.join(OUT, "_reference.json"), "w", encoding="utf-8") as f:
         json.dump(ref, f, indent=1)
-    print("referencia gravada", flush=True)
+    print("reference written", flush=True)
 
 
 if __name__ == "__main__":
@@ -245,6 +245,6 @@ if __name__ == "__main__":
             gen_fluid(fid, backend, comps, fracs)
         except Exception as exc:  # noqa: BLE001
             failed.append(fid)
-            print(f"{fid}: FALHOU -> {exc}", flush=True)
+            print(f"{fid}: FAILED -> {exc}", flush=True)
     gen_reference()
-    print("FALHAS:", failed, flush=True)
+    print("failed:", failed, flush=True)

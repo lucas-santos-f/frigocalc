@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import { Alerts, Card, CheckField, NumberField, SelectField, Stat } from '../ui/Field'
 import { LoadBars, LoadDonut } from '../charts/LoadBreakdown'
 import { useStore } from '../../state/store'
@@ -15,24 +16,27 @@ function uValue(ins: Insulation): number {
 
 export function LoadPanel({ sc, computed }: { sc: Scenario; computed: Computed }) {
   const t = useT()
-  const u = useUnits()
   const update = useStore((s) => s.update)
   const load = computed.load
 
   return (
-    <div className="grid">
-      <RoomCard sc={sc} load={load} />
-      <EnvelopeCard sc={sc} />
-      <InfiltrationCard sc={sc} load={load} />
-      <InternalCard sc={sc} />
-      <Card title={t('vent.title')}>
-        <div className="fields">
-          <NumberField label={t('vent.airflowM3h')} quantity="airflow" value={sc.ventilation.airflowM3h} min={0} onChange={(v) => update((d) => (d.ventilation.airflowM3h = v ?? 0))} />
-        </div>
-      </Card>
-      <ProductsCard sc={sc} />
-      <DirectCard sc={sc} />
-      <ResultsCard load={load} t={t} u={u} />
+    <div className="workspace">
+      <div className="stack">
+        <RoomCard sc={sc} load={load} />
+        <EnvelopeCard sc={sc} />
+        <InfiltrationCard sc={sc} load={load} />
+        <InternalCard sc={sc} />
+        <Card title={t('vent.title')}>
+          <div className="fields">
+            <NumberField label={t('vent.airflowM3h')} quantity="airflow" value={sc.ventilation.airflowM3h} min={0} onChange={(v) => update((d) => (d.ventilation.airflowM3h = v ?? 0))} />
+          </div>
+        </Card>
+        <ProductsCard sc={sc} />
+        <DirectCard sc={sc} />
+      </div>
+      <aside className="aside">
+        <ResultsCard load={load} />
+      </aside>
     </div>
   )
 }
@@ -57,7 +61,7 @@ function RoomCard({ sc, load }: { sc: Scenario; load: LoadResult }) {
         <NumberField label={t('room.runHours')} unit={t('common.hours_day')} value={r.runHours} min={1} max={24} onChange={set('runHours')} />
         <NumberField label={t('room.safetyFactor')} unit="%" value={r.safetyFactor} min={0} max={100} digits={0} onChange={set('safetyFactor')} />
       </div>
-      <div className="stats" style={{ marginTop: 10 }}>
+      <div className="stats" style={{ marginTop: 16 }}>
         <Stat label={t('room.volume')} value={u.show('volume', load.geometry.volume, 0)} />
         <Stat label={t('room.floorArea')} value={u.show('area', load.geometry.floorArea, 0)} />
         <Stat label={t('room.wallArea')} value={u.show('area', load.geometry.wallArea, 0)} />
@@ -117,13 +121,13 @@ function InfiltrationCard({ sc, load }: { sc: Scenario; load: LoadResult }) {
           ]}
         />
         {inf.method === 'air_change' ? (
-          <NumberField label={t('inf.airChangesPerDay')} unit="/dia" value={inf.airChangesPerDay} nullable autoHint={`auto ≈ ${auto.toFixed(1)}`} min={0} onChange={(v) => update((d) => (d.infiltration.airChangesPerDay = v))} />
+          <NumberField label={t('inf.airChangesPerDay')} unit={t('common.per_day')} value={inf.airChangesPerDay} nullable autoHint={`auto ≈ ${auto.toFixed(1)}`} min={0} onChange={(v) => update((d) => (d.infiltration.airChangesPerDay = v))} />
         ) : (
           <>
             <NumberField label={t('inf.doorCount')} value={inf.doorCount} min={0} digits={0} onChange={(v) => update((d) => (d.infiltration.doorCount = v ?? 0))} />
             <NumberField label={t('inf.doorWidth')} quantity="length" value={inf.doorWidth} min={0} onChange={(v) => update((d) => (d.infiltration.doorWidth = v ?? 0))} />
             <NumberField label={t('inf.doorHeight')} quantity="length" value={inf.doorHeight} min={0} onChange={(v) => update((d) => (d.infiltration.doorHeight = v ?? 0))} />
-            <NumberField label={t('inf.doorOpenMinutesPerDay')} unit="min/dia" value={inf.doorOpenMinutesPerDay} min={0} digits={0} onChange={(v) => update((d) => (d.infiltration.doorOpenMinutesPerDay = v ?? 0))} />
+            <NumberField label={t('inf.doorOpenMinutesPerDay')} unit={t('common.min_day')} value={inf.doorOpenMinutesPerDay} min={0} digits={0} onChange={(v) => update((d) => (d.infiltration.doorOpenMinutesPerDay = v ?? 0))} />
             <NumberField label={t('inf.protectionEffectiveness')} unit="0–1" value={inf.protectionEffectiveness} min={0} max={0.95} onChange={(v) => update((d) => (d.infiltration.protectionEffectiveness = v ?? 0))} />
           </>
         )}
@@ -153,7 +157,7 @@ function InternalCard({ sc }: { sc: Scenario }) {
         <NumberField label={t('int.otherEquipmentKW')} quantity="power" value={i.otherEquipmentKW} min={0} onChange={set('otherEquipmentKW')} />
         <NumberField label={t('int.otherEquipmentHours')} unit={h} value={i.otherEquipmentHours} min={0} max={24} onChange={set('otherEquipmentHours')} />
         <NumberField label={t('int.defrostKW')} quantity="power" value={i.defrostKW} min={0} onChange={set('defrostKW')} />
-        <NumberField label={t('int.defrostMinutesPerDay')} unit="min/dia" value={i.defrostMinutesPerDay} min={0} digits={0} onChange={set('defrostMinutesPerDay')} />
+        <NumberField label={t('int.defrostMinutesPerDay')} unit={t('common.min_day')} value={i.defrostMinutesPerDay} min={0} digits={0} onChange={set('defrostMinutesPerDay')} />
         <NumberField label={t('int.defrostHeatFraction')} unit="0–1" value={i.defrostHeatFraction} min={0} max={1} onChange={set('defrostHeatFraction')} />
       </div>
     </Card>
@@ -182,7 +186,7 @@ function ProductsCard({ sc }: { sc: Scenario }) {
         </span>
       }
     >
-      {sc.products.length === 0 && <div className="muted">{t('common.none')}</div>}
+      {sc.products.length === 0 && <div className="empty">{t('common.none')}</div>}
       {sc.products.map((p, idx) => {
         const set = (k: keyof typeof p) => (v: number | null) => update((d) => ((d.products[idx] as unknown as Record<string, number>)[k] = v ?? 0))
         return (
@@ -204,8 +208,8 @@ function ProductsCard({ sc }: { sc: Scenario }) {
                   </option>
                 ))}
               </select>
-              <button type="button" className="btn small danger no-print" onClick={() => update((d) => d.products.splice(idx, 1))}>
-                ✕
+              <button type="button" className="btn small icon ghost danger no-print" aria-label={t('common.remove')} title={t('common.remove')} onClick={() => update((d) => d.products.splice(idx, 1))}>
+                <X size={16} />
               </button>
             </header>
             <div className="fields">
@@ -251,13 +255,13 @@ function DirectCard({ sc }: { sc: Scenario }) {
         </span>
       }
     >
-      {sc.directLoads.length === 0 && <div className="muted">{t('common.none')}</div>}
+      {sc.directLoads.length === 0 && <div className="empty">{t('common.none')}</div>}
       {sc.directLoads.map((dl, idx) => (
         <div className="list-item" key={dl.id}>
           <header>
             <input type="text" value={labelText(dl.name, 'direct.generic', t)} maxLength={80} onChange={(e) => update((d) => (d.directLoads[idx].name = e.target.value))} aria-label={t('direct.name')} />
-            <button type="button" className="btn small danger no-print" onClick={() => update((d) => d.directLoads.splice(idx, 1))}>
-              ✕
+            <button type="button" className="btn small icon ghost danger no-print" aria-label={t('common.remove')} title={t('common.remove')} onClick={() => update((d) => d.directLoads.splice(idx, 1))}>
+              <X size={16} />
             </button>
           </header>
           <div className="fields">
@@ -270,35 +274,41 @@ function DirectCard({ sc }: { sc: Scenario }) {
   )
 }
 
-function ResultsCard({ load, t, u }: { load: LoadResult; t: ReturnType<typeof useT>; u: ReturnType<typeof useUnits> }) {
+function ResultsCard({ load }: { load: LoadResult }) {
+  const t = useT()
+  const u = useUnits()
   const alt = powerAlternatives(load.kWEquipment)
   return (
-    <Card title={t('load.results')} className="span-2">
+    <Card title={t('load.results')} className="raised">
       <div className="stats">
-        <Stat big label={t('load.equipment_total')} value={u.show('power', load.kWEquipment, 1)} sub={`${u.n(alt.TR, 1)} TR · ${u.n(alt.kcalh, 0)} kcal/h · ${u.n(alt.BTUh, 0)} BTU/h`} />
+        <Stat
+          big
+          label={t('load.equipment_total')}
+          value={
+            <>
+              {u.val('power', load.kWEquipment, 1)}
+              <small>{u.label('power')}</small>
+            </>
+          }
+          sub={`${u.n(alt.TR, 1)} TR · ${u.n(alt.kcalh, 0)} kcal/h · ${u.n(alt.BTUh, 0)} BTU/h`}
+        />
         <Stat label={t('load.total_day')} value={u.show('energy', load.kWhDay, 0)} />
         <Stat label={t('load.avg24')} value={u.show('power', load.kWAvg24, 1)} />
         <Stat label={t('load.equipment_base')} value={u.show('power', load.kWEquipmentBase, 1)} />
         <Stat label={t('load.safety')} value={u.show('power', load.safetyKW, 1)} />
       </div>
       <Alerts warnings={load.warnings} />
-      <div className="grid" style={{ marginTop: 12 }}>
-        <div>
-          <h3 style={{ fontSize: '0.9rem', marginBottom: 6 }}>{t('load.breakdown')}</h3>
-          <LoadDonut load={load} />
-        </div>
-        <div>
-          <h3 style={{ fontSize: '0.9rem', marginBottom: 6 }}>{t('load.kw_sizing')}</h3>
-          <LoadBars load={load} />
-        </div>
-      </div>
-      <div className="table-wrap" style={{ marginTop: 12 }}>
+      <div className="chart-title">{t('load.breakdown')}</div>
+      <LoadDonut load={load} />
+      <div className="chart-title">{t('load.kw_sizing')}</div>
+      <LoadBars load={load} />
+      <div className="table-wrap" style={{ marginTop: 16 }}>
         <table className="kv">
           <thead>
             <tr>
               <th>{t('load.item')}</th>
               <th className="num">{u.label('energy')}</th>
-              <th className="num">{t('load.kw_sizing')}</th>
+              <th className="num">{u.label('power')}</th>
               <th className="num">{t('load.share')}</th>
             </tr>
           </thead>
@@ -308,7 +318,7 @@ function ResultsCard({ load, t, u }: { load: LoadResult; t: ReturnType<typeof us
                 <td>
                   {labelText(i.label, i.labelKey, t)}
                   {i.label && <span className="muted"> · {t(i.labelKey)}</span>}
-                  {i.detail && <span className="muted"> · {i.detail}</span>}
+                  {i.detail && <span className="muted"> · {typeof i.detail === 'string' ? i.detail : t(i.detail.key, i.detail.value)}</span>}
                 </td>
                 <td className="num">{u.val('energy', i.kWhDay, 0)}</td>
                 <td className="num">{u.val('power', i.kWSizing, 2)}</td>

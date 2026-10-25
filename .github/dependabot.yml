@@ -1,5 +1,5 @@
 version: 2
-# Mensal e agrupado para não lotar a caixa de e-mail; alertas de segurança continuam imediatos.
+# monthly and grouped to keep the inbox quiet; security alerts still arrive right away
 updates:
   - package-ecosystem: npm
     directory: /
@@ -9,7 +9,7 @@ updates:
     groups:
       npm-all:
         patterns: ['*']
-    # Versões major mudam APIs e quebram o build: atualizar manualmente.
+    # major versions change APIs and break the build, so those are bumped by hand
     ignore:
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
