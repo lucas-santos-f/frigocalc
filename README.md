@@ -2,6 +2,8 @@
 
 Calculadora visual de **carga térmica, ciclo de refrigeração e dimensionamento de sala de máquinas** para refrigeração comercial e industrial: câmaras frias (resfriados e congelados), túneis de congelamento, frigoríficos, salas de processo alimentício, supermercados, indústria química e data centers — com todos os fluidos refrigerantes usuais (amônia, CO₂ subcrítico/transcrítico, hidrocarbonetos, HFCs, HFOs e misturas).
 
+- **Site:** https://frigocalc.frioeclima.workers.dev
+
 Aplicação **100 % estática**: todo o cálculo roda no navegador, nada é enviado a servidor. Os cenários ficam salvos no próprio dispositivo (localStorage), podem ser exportados em JSON/CSV, impressos em PDF e compartilhados por link.
 
 ## Funcionalidades

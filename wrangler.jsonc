@@ -3,8 +3,8 @@
   // O arquivo public/_headers é respeitado pelos Static Assets (CSP, HSTS etc.).
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "frigocalc",
-  // workers.dev and preview URLs stay off for now.
-  "workers_dev": false,
+  // Served from the account's workers.dev subdomain (frioeclima.workers.dev).
+  "workers_dev": true,
   "preview_urls": false,
   "compatibility_date": "2026-10-01",
   "assets": {
