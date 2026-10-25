@@ -41,5 +41,8 @@
     "vite": "^7.0.0",
     "vitest": "^5.0.5",
     "wrangler": "^4.0.0"
+  },
+  "overrides": {
+    "undici": "^7.30.1"
   }
 }
