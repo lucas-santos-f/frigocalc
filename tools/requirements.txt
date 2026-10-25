@@ -1,1 +1,1 @@
-CoolProp>=6.6
+CoolProp>=8.0.0
