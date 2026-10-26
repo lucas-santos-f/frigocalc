@@ -64,7 +64,7 @@ export function PhDiagram({ fluid, cycle, title }: { fluid: Fluid; cycle: CycleR
           return `<b>${p.data.name ?? p.seriesName}</b><br/>h = ${h.toFixed(1)} ${unitLabel('enthalpy', sys)}<br/>P = ${P.toFixed(2)} ${unitLabel('pressure', sys)}${extra}`
         },
       },
-      xAxis: { type: 'value', name: `${t('cyc.ph_x')} (${unitLabel('enthalpy', sys)})`, nameLocation: 'middle', nameGap: 28, min: Math.floor(cx(hMin) / 20) * 20, max: Math.ceil(cx(hMax) / 20) * 20, axisLine: { lineStyle: { color: c.grid } }, splitLine: { lineStyle: { color: c.grid, type: 'dashed' } }, axisLabel: { color: c.muted } },
+      xAxis: { type: 'value', name: `${t('cyc.ph_x')} (${unitLabel('enthalpy', sys)})`, nameLocation: 'middle', nameGap: 28, min: Math.floor(cx(hMin) / 20) * 20, max: Math.ceil(cx(hMax) / 20) * 20, axisLine: { lineStyle: { color: c.grid } }, splitLine: { lineStyle: { color: c.grid, type: 'dashed' } }, axisLabel: { color: c.muted, showMinLabel: false, showMaxLabel: false } }, // the bounds are rounded to 20, so their labels would crowd the round ticks
       yAxis: { type: 'log', name: `${t('cyc.ph_y')} (${unitLabel('pressure', sys)})`, min: cy(Pmin), max: cy(Pmax), axisLine: { lineStyle: { color: c.grid } }, splitLine: { lineStyle: { color: c.grid, type: 'dashed' } }, axisLabel: { color: c.muted, formatter: (v: number) => (v >= 10 ? v.toFixed(0) : v.toFixed(1)) } },
       series: [
         { type: 'line', name: 'liq', data: liquid.map(([h, P]) => [cx(h), cy(P)]), symbol: 'none', smooth: true, lineStyle: { color: c.accent, width: 2 }, tooltip: { show: false }, silent: true, z: 2 },

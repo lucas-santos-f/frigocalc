@@ -4,6 +4,10 @@ Cooling load, refrigeration cycle and machine room sizing for commercial and ind
 
 **Live:** https://frigocalc.frioeclima.workers.dev
 
+![Cooling load tab with the result panel and load breakdown](docs/screenshot-load.png)
+
+![Pressure–enthalpy diagram of an R448A cycle with its state points](docs/screenshot-ph-diagram.png)
+
 Everything runs in the browser. Nothing is sent to a server: scenarios stay in the device's local storage and can be exported as JSON or CSV, printed to PDF or shared as a link.
 
 ## Features
