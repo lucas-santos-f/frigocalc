@@ -3,7 +3,7 @@ Generate refrigerant property tables with CoolProp.
 Output: src/data/tables/<fluid>.json (compact) and src/data/tables/_reference.json (test points).
 
 Usage:  python tools/gen_tables.py [--only R134a,R717]
-Needs:  pip install -r tools/requirements.txt  (CoolProp >= 6.6)
+Needs:  pip install -r tools/requirements.txt  (CoolProp >= 8.0)
 
 Conventions:
   P in kPa, T in K, h in kJ/kg, s in kJ/(kg.K), rho in kg/m3.
