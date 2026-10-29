@@ -1,8 +1,75 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { fromDisplay, toDisplay, unitLabel, type Quantity } from '../../units'
 import { useStore } from '../../state/store'
 import { useT } from '../../hooks'
 import type { Warning } from '../../engine/types'
+
+interface TipPos {
+  left: number
+  width: number
+  top?: number
+  bottom?: number
+}
+
+// Small "?" button with a plain-language explanation. The bubble is fixed-positioned
+// on document.body so cards and scrolling panels can't clip it.
+export function Help({ text }: { text: string }) {
+  const t = useT()
+  const id = useId()
+  const ref = useRef<HTMLButtonElement>(null)
+  const [pos, setPos] = useState<TipPos | null>(null)
+
+  const show = () => {
+    const r = ref.current?.getBoundingClientRect()
+    if (!r) return
+    const width = Math.min(300, window.innerWidth - 16)
+    const left = Math.min(Math.max(8, r.left - 12), window.innerWidth - width - 8)
+    setPos(r.bottom + 140 < window.innerHeight ? { left, width, top: r.bottom + 6 } : { left, width, bottom: window.innerHeight - r.top + 6 })
+  }
+  const hide = () => setPos(null)
+
+  useEffect(() => {
+    if (!pos) return
+    const close = () => setPos(null)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [pos])
+
+  return (
+    <>
+      <button
+        ref={ref}
+        type="button"
+        className="help no-print"
+        aria-label={t('common.help')}
+        aria-describedby={id}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+        onClick={show}
+        onKeyDown={(e) => e.key === 'Escape' && hide()}
+      >
+        ?
+      </button>
+      <span id={id} className="sr-only">
+        {text}
+      </span>
+      {pos &&
+        createPortal(
+          <div className="tooltip" aria-hidden="true" style={{ left: pos.left, width: pos.width, top: pos.top, bottom: pos.bottom }}>
+            {text}
+          </div>,
+          document.body,
+        )}
+    </>
+  )
+}
 
 interface NumberFieldProps {
   label: string
@@ -17,6 +84,7 @@ interface NumberFieldProps {
   nullable?: boolean
   autoHint?: string
   title?: string
+  help?: string
 }
 
 function roundTo(v: number, digits: number): number {
@@ -25,9 +93,10 @@ function roundTo(v: number, digits: number): number {
 }
 
 // Values are stored in SI; the field converts to and from the selected unit system.
-export function NumberField({ label, value, onChange, quantity, unit, step, min, max, digits = 2, nullable, autoHint, title }: NumberFieldProps) {
+export function NumberField({ label, value, onChange, quantity, unit, step, min, max, digits = 2, nullable, autoHint, title, help }: NumberFieldProps) {
   const sys = useStore((s) => s.units)
   const t = useT()
+  const id = useId()
   const disp = value === null ? '' : String(roundTo(quantity ? toDisplay(quantity, value, sys) : value, digits + (quantity && sys === 'IP' ? 1 : 0)))
   const [text, setText] = useState(disp)
   useEffect(() => setText(disp), [disp])
@@ -53,16 +122,18 @@ export function NumberField({ label, value, onChange, quantity, unit, step, min,
 
   return (
     <div className="field" title={title}>
-      <label>
-        <span title={label}>{label}</span>
+      <div className="field-head">
+        <label htmlFor={id}>{label}</label>
+        {help && <Help text={help} />}
         {nullable && value !== null && (
           <button type="button" className="auto-link" onClick={() => onChange(null)}>
             {t('common.auto')}
           </button>
         )}
-      </label>
+      </div>
       <div className="control">
         <input
+          id={id}
           type="text"
           inputMode="decimal"
           className={unitText ? '' : 'no-unit'}
@@ -86,15 +157,18 @@ interface SelectFieldProps<T extends string> {
   value: T
   onChange: (v: T) => void
   options: { value: T; label: string }[]
+  help?: string
 }
 
-export function SelectField<T extends string>({ label, value, onChange, options }: SelectFieldProps<T>) {
+export function SelectField<T extends string>({ label, value, onChange, options, help }: SelectFieldProps<T>) {
+  const id = useId()
   return (
     <div className="field">
-      <label>
-        <span title={label}>{label}</span>
-      </label>
-      <select value={value} onChange={(e) => onChange(e.target.value as T)}>
+      <div className="field-head">
+        <label htmlFor={id}>{label}</label>
+        {help && <Help text={help} />}
+      </div>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value as T)}>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
@@ -105,27 +179,28 @@ export function SelectField<T extends string>({ label, value, onChange, options 
   )
 }
 
-export function CheckField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+export function CheckField({ label, checked, onChange, help }: { label: string; checked: boolean; onChange: (v: boolean) => void; help?: string }) {
   return (
     <div className="field">
-      <label aria-hidden="true">
-        <span>&nbsp;</span>
-      </label>
-      <label className="check">
-        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-        {label}
-      </label>
+      <div className="check">
+        <label>
+          <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+          {label}
+        </label>
+        {help && <Help text={help} />}
+      </div>
     </div>
   )
 }
 
 export function TextField({ label, value, onChange, maxLength = 120 }: { label: string; value: string; onChange: (v: string) => void; maxLength?: number }) {
+  const id = useId()
   return (
     <div className="field">
-      <label>
-        <span title={label}>{label}</span>
-      </label>
-      <input type="text" value={value} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} />
+      <div className="field-head">
+        <label htmlFor={id}>{label}</label>
+      </div>
+      <input id={id} type="text" value={value} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} />
     </div>
   )
 }

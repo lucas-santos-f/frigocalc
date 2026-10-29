@@ -17,10 +17,10 @@ export function PlantPanel({ sc, computed }: { sc: Scenario; computed: Computed 
     <>
       <Card title={t('plant.title')}>
         <div className="fields">
-          <NumberField label={t('plant.nCompressors')} value={p.nCompressors} min={1} max={40} digits={0} onChange={(v) => update((d) => (d.plant.nCompressors = Math.max(1, Math.round(v ?? 1))))} />
-          <CheckField label={t('plant.standby')} checked={p.standby} onChange={(v) => update((d) => (d.plant.standby = v))} />
+          <NumberField label={t('plant.nCompressors')} help={t('help.plant.nCompressors')} value={p.nCompressors} min={1} max={40} digits={0} onChange={(v) => update((d) => (d.plant.nCompressors = Math.max(1, Math.round(v ?? 1))))} />
+          <CheckField label={t('plant.standby')} help={t('help.plant.standby')} checked={p.standby} onChange={(v) => update((d) => (d.plant.standby = v))} />
           <SelectField
-            label={t('plant.condenserType')}
+            label={t('plant.condenserType')} help={t('help.plant.condenserType')}
             value={p.condenserType}
             onChange={(v) => update((d) => (d.plant.condenserType = v))}
             options={[
@@ -30,9 +30,9 @@ export function PlantPanel({ sc, computed }: { sc: Scenario; computed: Computed 
             ]}
           />
           <NumberField label={t('plant.voltage')} unit="V" value={p.voltage} min={100} digits={0} onChange={(v) => update((d) => (d.plant.voltage = v ?? 380))} />
-          <NumberField label={t('plant.powerFactor')} unit="0–1" value={p.powerFactor} min={0.6} max={1} onChange={(v) => update((d) => (d.plant.powerFactor = v ?? 0.92))} />
-          <NumberField label={t('plant.chargeKgPerKW')} quantity="kgperkw" value={p.chargeKgPerKW} nullable autoHint={r ? `auto ${r.refrigerant.chargeKgPerKW.toFixed(1)}` : undefined} min={0} onChange={(v) => update((d) => (d.plant.chargeKgPerKW = v))} />
-          <NumberField label={t('plant.machineRoomArea')} quantity="area" value={p.machineRoomArea} nullable autoHint={r ? `auto ${u.show('area', r.refrigerant.machineRoomAreaM2, 0)}` : undefined} min={0} onChange={(v) => update((d) => (d.plant.machineRoomArea = v))} />
+          <NumberField label={t('plant.powerFactor')} help={t('help.plant.powerFactor')} unit="0–1" value={p.powerFactor} min={0.6} max={1} onChange={(v) => update((d) => (d.plant.powerFactor = v ?? 0.92))} />
+          <NumberField label={t('plant.chargeKgPerKW')} help={t('help.plant.chargeKgPerKW')} quantity="kgperkw" value={p.chargeKgPerKW} nullable autoHint={r ? `auto ${r.refrigerant.chargeKgPerKW.toFixed(1)}` : undefined} min={0} onChange={(v) => update((d) => (d.plant.chargeKgPerKW = v))} />
+          <NumberField label={t('plant.machineRoomArea')} help={t('help.plant.machineRoomArea')} quantity="area" value={p.machineRoomArea} nullable autoHint={r ? `auto ${u.show('area', r.refrigerant.machineRoomAreaM2, 0)}` : undefined} min={0} onChange={(v) => update((d) => (d.plant.machineRoomArea = v))} />
         </div>
         {computed.loading && (
           <div className="alerts">

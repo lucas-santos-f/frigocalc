@@ -28,7 +28,7 @@ export function LoadPanel({ sc, computed }: { sc: Scenario; computed: Computed }
         <InternalCard sc={sc} />
         <Card title={t('vent.title')}>
           <div className="fields">
-            <NumberField label={t('vent.airflowM3h')} quantity="airflow" value={sc.ventilation.airflowM3h} min={0} onChange={(v) => update((d) => (d.ventilation.airflowM3h = v ?? 0))} />
+            <NumberField label={t('vent.airflowM3h')} help={t('help.vent.airflowM3h')} quantity="airflow" value={sc.ventilation.airflowM3h} min={0} onChange={(v) => update((d) => (d.ventilation.airflowM3h = v ?? 0))} />
           </div>
         </Card>
         <ProductsCard sc={sc} />
@@ -53,13 +53,13 @@ function RoomCard({ sc, load }: { sc: Scenario; load: LoadResult }) {
         <NumberField label={t('room.length')} quantity="length" value={r.length} min={0.5} onChange={set('length')} />
         <NumberField label={t('room.width')} quantity="length" value={r.width} min={0.5} onChange={set('width')} />
         <NumberField label={t('room.height')} quantity="length" value={r.height} min={1} onChange={set('height')} />
-        <NumberField label={t('room.tInt')} quantity="temp" value={r.tInt} onChange={set('tInt')} />
-        <NumberField label={t('room.rhInt')} unit="%" value={r.rhInt} min={0} max={100} digits={0} onChange={set('rhInt')} />
-        <NumberField label={t('room.tExt')} quantity="temp" value={r.tExt} onChange={set('tExt')} />
-        <NumberField label={t('room.rhExt')} unit="%" value={r.rhExt} min={0} max={100} digits={0} onChange={set('rhExt')} />
-        <NumberField label={t('room.tGround')} quantity="temp" value={r.tGround} onChange={set('tGround')} />
-        <NumberField label={t('room.runHours')} unit={t('common.hours_day')} value={r.runHours} min={1} max={24} onChange={set('runHours')} />
-        <NumberField label={t('room.safetyFactor')} unit="%" value={r.safetyFactor} min={0} max={100} digits={0} onChange={set('safetyFactor')} />
+        <NumberField label={t('room.tInt')} help={t('help.room.tInt')} quantity="temp" value={r.tInt} onChange={set('tInt')} />
+        <NumberField label={t('room.rhInt')} help={t('help.room.rhInt')} unit="%" value={r.rhInt} min={0} max={100} digits={0} onChange={set('rhInt')} />
+        <NumberField label={t('room.tExt')} help={t('help.room.tExt')} quantity="temp" value={r.tExt} onChange={set('tExt')} />
+        <NumberField label={t('room.rhExt')} help={t('help.room.rhExt')} unit="%" value={r.rhExt} min={0} max={100} digits={0} onChange={set('rhExt')} />
+        <NumberField label={t('room.tGround')} help={t('help.room.tGround')} quantity="temp" value={r.tGround} onChange={set('tGround')} />
+        <NumberField label={t('room.runHours')} help={t('help.room.runHours')} unit={t('common.hours_day')} value={r.runHours} min={1} max={24} onChange={set('runHours')} />
+        <NumberField label={t('room.safetyFactor')} help={t('help.room.safetyFactor')} unit="%" value={r.safetyFactor} min={0} max={100} digits={0} onChange={set('safetyFactor')} />
       </div>
       <div className="stats" style={{ marginTop: 16 }}>
         <Stat label={t('room.volume')} value={u.show('volume', load.geometry.volume, 0)} />
@@ -90,11 +90,11 @@ function EnvelopeCard({ sc }: { sc: Scenario }) {
             </header>
             <div className="fields">
               <CheckField label={t('env.enabled')} checked={ins.enabled} onChange={(v) => update((d) => (d.envelope[key].enabled = v))} />
-              <NumberField label={t('env.thickness')} unit="mm" value={ins.thickness} min={0} digits={0} onChange={set('thickness')} />
-              <NumberField label={t('env.k')} unit="W/m·K" value={ins.k} min={0.005} digits={3} onChange={set('k')} />
-              <NumberField label={t('env.rSurfaces')} unit="m²K/W" value={ins.rSurfaces} min={0} digits={2} onChange={set('rSurfaces')} />
-              <NumberField label={t('env.tExtOverride')} quantity="temp" value={ins.tExtOverride} nullable onChange={set('tExtOverride')} />
-              <NumberField label={t('env.solarAdd')} quantity="dtemp" value={ins.solarAdd} onChange={set('solarAdd')} />
+              <NumberField label={t('env.thickness')} help={t('help.env.thickness')} unit="mm" value={ins.thickness} min={0} digits={0} onChange={set('thickness')} />
+              <NumberField label={t('env.k')} help={t('help.env.k')} unit="W/m·K" value={ins.k} min={0.005} digits={3} onChange={set('k')} />
+              <NumberField label={t('env.rSurfaces')} help={t('help.env.rSurfaces')} unit="m²K/W" value={ins.rSurfaces} min={0} digits={2} onChange={set('rSurfaces')} />
+              <NumberField label={t('env.tExtOverride')} help={t('help.env.tExtOverride')} quantity="temp" value={ins.tExtOverride} nullable onChange={set('tExtOverride')} />
+              <NumberField label={t('env.solarAdd')} help={t('help.env.solarAdd')} quantity="dtemp" value={ins.solarAdd} onChange={set('solarAdd')} />
             </div>
           </div>
         )
@@ -112,7 +112,7 @@ function InfiltrationCard({ sc, load }: { sc: Scenario; load: LoadResult }) {
     <Card title={t('inf.title')}>
       <div className="fields">
         <SelectField
-          label={t('inf.method')}
+          label={t('inf.method')} help={t('help.inf.method')}
           value={inf.method}
           onChange={(v) => update((d) => (d.infiltration.method = v))}
           options={[
@@ -121,14 +121,14 @@ function InfiltrationCard({ sc, load }: { sc: Scenario; load: LoadResult }) {
           ]}
         />
         {inf.method === 'air_change' ? (
-          <NumberField label={t('inf.airChangesPerDay')} unit={t('common.per_day')} value={inf.airChangesPerDay} nullable autoHint={`auto ≈ ${auto.toFixed(1)}`} min={0} onChange={(v) => update((d) => (d.infiltration.airChangesPerDay = v))} />
+          <NumberField label={t('inf.airChangesPerDay')} help={t('help.inf.airChangesPerDay')} unit={t('common.per_day')} value={inf.airChangesPerDay} nullable autoHint={`auto ≈ ${auto.toFixed(1)}`} min={0} onChange={(v) => update((d) => (d.infiltration.airChangesPerDay = v))} />
         ) : (
           <>
             <NumberField label={t('inf.doorCount')} value={inf.doorCount} min={0} digits={0} onChange={(v) => update((d) => (d.infiltration.doorCount = v ?? 0))} />
             <NumberField label={t('inf.doorWidth')} quantity="length" value={inf.doorWidth} min={0} onChange={(v) => update((d) => (d.infiltration.doorWidth = v ?? 0))} />
             <NumberField label={t('inf.doorHeight')} quantity="length" value={inf.doorHeight} min={0} onChange={(v) => update((d) => (d.infiltration.doorHeight = v ?? 0))} />
-            <NumberField label={t('inf.doorOpenMinutesPerDay')} unit={t('common.min_day')} value={inf.doorOpenMinutesPerDay} min={0} digits={0} onChange={(v) => update((d) => (d.infiltration.doorOpenMinutesPerDay = v ?? 0))} />
-            <NumberField label={t('inf.protectionEffectiveness')} unit="0–1" value={inf.protectionEffectiveness} min={0} max={0.95} onChange={(v) => update((d) => (d.infiltration.protectionEffectiveness = v ?? 0))} />
+            <NumberField label={t('inf.doorOpenMinutesPerDay')} help={t('help.inf.doorOpenMinutesPerDay')} unit={t('common.min_day')} value={inf.doorOpenMinutesPerDay} min={0} digits={0} onChange={(v) => update((d) => (d.infiltration.doorOpenMinutesPerDay = v ?? 0))} />
+            <NumberField label={t('inf.protectionEffectiveness')} help={t('help.inf.protectionEffectiveness')} unit="0–1" value={inf.protectionEffectiveness} min={0} max={0.95} onChange={(v) => update((d) => (d.infiltration.protectionEffectiveness = v ?? 0))} />
           </>
         )}
       </div>
@@ -146,19 +146,19 @@ function InternalCard({ sc }: { sc: Scenario }) {
     <Card title={t('int.title')}>
       <div className="fields">
         <NumberField label={t('int.people')} value={i.people} min={0} digits={0} onChange={set('people')} />
-        <NumberField label={t('int.peopleHours')} unit={h} value={i.peopleHours} min={0} max={24} onChange={set('peopleHours')} />
-        <NumberField label={t('int.lightingWPerM2')} quantity="wpm2" value={i.lightingWPerM2} min={0} onChange={set('lightingWPerM2')} />
+        <NumberField label={t('int.peopleHours')} help={t('help.int.peopleHours')} unit={h} value={i.peopleHours} min={0} max={24} onChange={set('peopleHours')} />
+        <NumberField label={t('int.lightingWPerM2')} help={t('help.int.lightingWPerM2')} quantity="wpm2" value={i.lightingWPerM2} min={0} onChange={set('lightingWPerM2')} />
         <NumberField label={t('int.lightingHours')} unit={h} value={i.lightingHours} min={0} max={24} onChange={set('lightingHours')} />
-        <NumberField label={t('int.evapFanKW')} quantity="power" value={i.evapFanKW} nullable autoHint="auto 4 %" min={0} onChange={set('evapFanKW')} />
+        <NumberField label={t('int.evapFanKW')} help={t('help.int.evapFanKW')} quantity="power" value={i.evapFanKW} nullable autoHint="auto 4 %" min={0} onChange={set('evapFanKW')} />
         <NumberField label={t('int.evapFanHours')} unit={h} value={i.evapFanHours} min={0} max={24} onChange={set('evapFanHours')} />
         <NumberField label={t('int.forklifts')} value={i.forklifts} min={0} digits={0} onChange={set('forklifts')} />
-        <NumberField label={t('int.forkliftKW')} quantity="power" value={i.forkliftKW} min={0} onChange={set('forkliftKW')} />
+        <NumberField label={t('int.forkliftKW')} help={t('help.int.forkliftKW')} quantity="power" value={i.forkliftKW} min={0} onChange={set('forkliftKW')} />
         <NumberField label={t('int.forkliftHours')} unit={h} value={i.forkliftHours} min={0} max={24} onChange={set('forkliftHours')} />
-        <NumberField label={t('int.otherEquipmentKW')} quantity="power" value={i.otherEquipmentKW} min={0} onChange={set('otherEquipmentKW')} />
+        <NumberField label={t('int.otherEquipmentKW')} help={t('help.int.otherEquipmentKW')} quantity="power" value={i.otherEquipmentKW} min={0} onChange={set('otherEquipmentKW')} />
         <NumberField label={t('int.otherEquipmentHours')} unit={h} value={i.otherEquipmentHours} min={0} max={24} onChange={set('otherEquipmentHours')} />
-        <NumberField label={t('int.defrostKW')} quantity="power" value={i.defrostKW} min={0} onChange={set('defrostKW')} />
+        <NumberField label={t('int.defrostKW')} help={t('help.int.defrostKW')} quantity="power" value={i.defrostKW} min={0} onChange={set('defrostKW')} />
         <NumberField label={t('int.defrostMinutesPerDay')} unit={t('common.min_day')} value={i.defrostMinutesPerDay} min={0} digits={0} onChange={set('defrostMinutesPerDay')} />
-        <NumberField label={t('int.defrostHeatFraction')} unit="0–1" value={i.defrostHeatFraction} min={0} max={1} onChange={set('defrostHeatFraction')} />
+        <NumberField label={t('int.defrostHeatFraction')} help={t('help.int.defrostHeatFraction')} unit="0–1" value={i.defrostHeatFraction} min={0} max={1} onChange={set('defrostHeatFraction')} />
       </div>
     </Card>
   )
@@ -213,18 +213,18 @@ function ProductsCard({ sc }: { sc: Scenario }) {
               </button>
             </header>
             <div className="fields">
-              <NumberField label={t('prod.massPerDay')} quantity="mass" value={p.massPerDay} min={0} digits={0} onChange={set('massPerDay')} />
-              <NumberField label={t('prod.tIn')} quantity="temp" value={p.tIn} onChange={set('tIn')} />
-              <NumberField label={t('prod.tOut')} quantity="temp" value={p.tOut} onChange={set('tOut')} />
-              <NumberField label={t('prod.pulldownHours')} unit="h" value={p.pulldownHours} min={0.1} onChange={set('pulldownHours')} />
-              <NumberField label={t('prod.storedMass')} quantity="mass" value={p.storedMass} min={0} digits={0} onChange={set('storedMass')} />
-              <NumberField label={t('prod.respiration')} unit="W/kg" value={p.respiration} min={0} digits={3} onChange={set('respiration')} />
-              <NumberField label={t('prod.cpAbove')} unit="kJ/kg·K" value={p.cpAbove} min={0} onChange={set('cpAbove')} />
-              <NumberField label={t('prod.cpBelow')} unit="kJ/kg·K" value={p.cpBelow} min={0} onChange={set('cpBelow')} />
-              <NumberField label={t('prod.latent')} quantity="enthalpy" value={p.latent} min={0} digits={0} onChange={set('latent')} />
-              <NumberField label={t('prod.tFreeze')} quantity="temp" value={p.tFreeze} onChange={set('tFreeze')} />
-              <NumberField label={t('prod.packagingFraction')} unit="kg/kg" value={p.packagingFraction} min={0} onChange={set('packagingFraction')} />
-              <NumberField label={t('prod.packagingCp')} unit="kJ/kg·K" value={p.packagingCp} min={0} onChange={set('packagingCp')} />
+              <NumberField label={t('prod.massPerDay')} help={t('help.prod.massPerDay')} quantity="mass" value={p.massPerDay} min={0} digits={0} onChange={set('massPerDay')} />
+              <NumberField label={t('prod.tIn')} help={t('help.prod.tIn')} quantity="temp" value={p.tIn} onChange={set('tIn')} />
+              <NumberField label={t('prod.tOut')} help={t('help.prod.tOut')} quantity="temp" value={p.tOut} onChange={set('tOut')} />
+              <NumberField label={t('prod.pulldownHours')} help={t('help.prod.pulldownHours')} unit="h" value={p.pulldownHours} min={0.1} onChange={set('pulldownHours')} />
+              <NumberField label={t('prod.storedMass')} help={t('help.prod.storedMass')} quantity="mass" value={p.storedMass} min={0} digits={0} onChange={set('storedMass')} />
+              <NumberField label={t('prod.respiration')} help={t('help.prod.respiration')} unit="W/kg" value={p.respiration} min={0} digits={3} onChange={set('respiration')} />
+              <NumberField label={t('prod.cpAbove')} help={t('help.prod.cpAbove')} unit="kJ/kg·K" value={p.cpAbove} min={0} onChange={set('cpAbove')} />
+              <NumberField label={t('prod.cpBelow')} help={t('help.prod.cpBelow')} unit="kJ/kg·K" value={p.cpBelow} min={0} onChange={set('cpBelow')} />
+              <NumberField label={t('prod.latent')} help={t('help.prod.latent')} quantity="enthalpy" value={p.latent} min={0} digits={0} onChange={set('latent')} />
+              <NumberField label={t('prod.tFreeze')} help={t('help.prod.tFreeze')} quantity="temp" value={p.tFreeze} onChange={set('tFreeze')} />
+              <NumberField label={t('prod.packagingFraction')} help={t('help.prod.packagingFraction')} unit="kg/kg" value={p.packagingFraction} min={0} onChange={set('packagingFraction')} />
+              <NumberField label={t('prod.packagingCp')} help={t('help.prod.packagingCp')} unit="kJ/kg·K" value={p.packagingCp} min={0} onChange={set('packagingCp')} />
             </div>
           </div>
         )

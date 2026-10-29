@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Alerts, Card, NumberField, SafetyChip, SelectField, Stat } from '../ui/Field'
 import { PhDiagram } from '../charts/PhDiagram'
+import { CycleSchematic } from '../charts/CycleSchematic'
 import { SensitivityChart, type SweepPoint } from '../charts/Sensitivity'
 import { useStore } from '../../state/store'
 import { useT, useUnits, type Computed } from '../../hooks'
@@ -60,9 +61,9 @@ export function CyclePanel({ sc, computed }: { sc: Scenario; computed: Computed 
         <div className="stack">
           <Card title={t('cyc.title')} hint={`${t('cyc.load_from')}: ${u.show('power', Q, 1)}`}>
             <div className="fields">
-              <SelectField label={t('cyc.refrigerant')} value={c.refrigerant} onChange={(v) => update((d) => (d.cycle.refrigerant = v))} options={refOptions} />
+              <SelectField label={t('cyc.refrigerant')} help={t('help.cyc.refrigerant')} value={c.refrigerant} onChange={(v) => update((d) => (d.cycle.refrigerant = v))} options={refOptions} />
               <SelectField
-                label={t('cyc.system')}
+                label={t('cyc.system')} help={t('help.cyc.system')}
                 value={c.system}
                 onChange={(v) => update((d) => (d.cycle.system = v))}
                 options={[
@@ -72,12 +73,12 @@ export function CyclePanel({ sc, computed }: { sc: Scenario; computed: Computed 
                   { value: 'transcritical', label: t('cyc.transcritical') },
                 ]}
               />
-              <NumberField label={t('cyc.tEvap')} quantity="temp" value={c.tEvap} onChange={setC('tEvap')} />
-              {!transcritical && <NumberField label={t('cyc.tCond')} quantity="temp" value={c.tCond} onChange={setC('tCond')} />}
-              <NumberField label={t('cyc.superheat')} quantity="dtemp" value={c.superheat} min={0} onChange={setC('superheat')} />
-              <NumberField label={t('cyc.subcooling')} quantity="dtemp" value={c.subcooling} min={0} onChange={setC('subcooling')} />
+              <NumberField label={t('cyc.tEvap')} help={t('help.cyc.tEvap')} quantity="temp" value={c.tEvap} onChange={setC('tEvap')} />
+              {!transcritical && <NumberField label={t('cyc.tCond')} help={t('help.cyc.tCond')} quantity="temp" value={c.tCond} onChange={setC('tCond')} />}
+              <NumberField label={t('cyc.superheat')} help={t('help.cyc.superheat')} quantity="dtemp" value={c.superheat} min={0} onChange={setC('superheat')} />
+              <NumberField label={t('cyc.subcooling')} help={t('help.cyc.subcooling')} quantity="dtemp" value={c.subcooling} min={0} onChange={setC('subcooling')} />
               <SelectField
-                label={t('cyc.compressorType')}
+                label={t('cyc.compressorType')} help={t('help.cyc.compressorType')}
                 value={c.compressorType}
                 onChange={(v) => update((d) => (d.cycle.compressorType = v))}
                 options={[
@@ -86,21 +87,21 @@ export function CyclePanel({ sc, computed }: { sc: Scenario; computed: Computed 
                   { value: 'scroll', label: t('cyc.scroll') },
                 ]}
               />
-              <NumberField label={t('cyc.etaIs')} unit="0–1" value={c.etaIsOverride} nullable autoHint={effInfo ? `auto ${effInfo.etaIs.toFixed(2)}` : undefined} min={0.2} max={1} onChange={setC('etaIsOverride')} />
-              <NumberField label={t('cyc.etaVol')} unit="0–1" value={c.etaVolOverride} nullable autoHint={effInfo ? `auto ${effInfo.etaVol.toFixed(2)}` : undefined} min={0.2} max={1} onChange={setC('etaVolOverride')} />
-              <NumberField label={t('cyc.motorEff')} unit="0–1" value={c.motorEff} min={0.5} max={1} onChange={setC('motorEff')} />
-              {c.system === 'two_stage' && <NumberField label={t('cyc.tInter')} quantity="temp" value={c.tInter} nullable autoHint={tInterAuto !== null ? `auto ${u.show('temp', tInterAuto, 1)}` : undefined} onChange={setC('tInter')} />}
+              <NumberField label={t('cyc.etaIs')} help={t('help.cyc.etaIs')} unit="0–1" value={c.etaIsOverride} nullable autoHint={effInfo ? `auto ${effInfo.etaIs.toFixed(2)}` : undefined} min={0.2} max={1} onChange={setC('etaIsOverride')} />
+              <NumberField label={t('cyc.etaVol')} help={t('help.cyc.etaVol')} unit="0–1" value={c.etaVolOverride} nullable autoHint={effInfo ? `auto ${effInfo.etaVol.toFixed(2)}` : undefined} min={0.2} max={1} onChange={setC('etaVolOverride')} />
+              <NumberField label={t('cyc.motorEff')} help={t('help.cyc.motorEff')} unit="0–1" value={c.motorEff} min={0.5} max={1} onChange={setC('motorEff')} />
+              {c.system === 'two_stage' && <NumberField label={t('cyc.tInter')} help={t('help.cyc.tInter')} quantity="temp" value={c.tInter} nullable autoHint={tInterAuto !== null ? `auto ${u.show('temp', tInterAuto, 1)}` : undefined} onChange={setC('tInter')} />}
               {c.system === 'cascade' && (
                 <>
                   <SelectField label={t('cyc.refrigerantHT')} value={c.cascade.refrigerantHT} onChange={(v) => update((d) => (d.cycle.cascade.refrigerantHT = v))} options={refOptions} />
-                  <NumberField label={t('cyc.tCascade')} quantity="temp" value={c.cascade.tCascade} onChange={(v) => update((d) => (d.cycle.cascade.tCascade = v ?? -8))} />
-                  <NumberField label={t('cyc.dtCascade')} quantity="dtemp" value={c.cascade.dtCascade} min={0} onChange={(v) => update((d) => (d.cycle.cascade.dtCascade = v ?? 5))} />
+                  <NumberField label={t('cyc.tCascade')} help={t('help.cyc.tCascade')} quantity="temp" value={c.cascade.tCascade} onChange={(v) => update((d) => (d.cycle.cascade.tCascade = v ?? -8))} />
+                  <NumberField label={t('cyc.dtCascade')} help={t('help.cyc.dtCascade')} quantity="dtemp" value={c.cascade.dtCascade} min={0} onChange={(v) => update((d) => (d.cycle.cascade.dtCascade = v ?? 5))} />
                 </>
               )}
               {transcritical && (
                 <>
-                  <NumberField label={t('cyc.tGasCoolerOut')} quantity="temp" value={c.transcritical.tGasCoolerOut} onChange={(v) => update((d) => (d.cycle.transcritical.tGasCoolerOut = v ?? 35))} />
-                  <NumberField label={t('cyc.pGasCooler')} unit="bar" value={c.transcritical.pGasCooler} nullable autoHint={`auto ${optimalGasCoolerPressureBar(c.tEvap, c.transcritical.tGasCoolerOut).toFixed(0)} bar`} min={60} max={160} onChange={(v) => update((d) => (d.cycle.transcritical.pGasCooler = v))} />
+                  <NumberField label={t('cyc.tGasCoolerOut')} help={t('help.cyc.tGasCoolerOut')} quantity="temp" value={c.transcritical.tGasCoolerOut} onChange={(v) => update((d) => (d.cycle.transcritical.tGasCoolerOut = v ?? 35))} />
+                  <NumberField label={t('cyc.pGasCooler')} help={t('help.cyc.pGasCooler')} unit="bar" value={c.transcritical.pGasCooler} nullable autoHint={`auto ${optimalGasCoolerPressureBar(c.tEvap, c.transcritical.tGasCoolerOut).toFixed(0)} bar`} min={60} max={160} onChange={(v) => update((d) => (d.cycle.transcritical.pGasCooler = v))} />
                 </>
               )}
             </div>
@@ -115,6 +116,11 @@ export function CyclePanel({ sc, computed }: { sc: Scenario; computed: Computed 
               )}
             </div>
           </Card>
+          {cycle && cycle.points.length === 4 && !cycle.ht && (
+            <Card title={t('sch.title')} hint={t('sch.hint')}>
+              <CycleSchematic cycle={cycle} />
+            </Card>
+          )}
         </div>
         <aside className="aside">
           <Card title={t('cyc.results')} className="raised">

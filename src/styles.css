@@ -24,6 +24,11 @@
   --err-border: #fecaca;
   --err-text: #b91c1c;
   --info-bg: #f8fafc;
+  --tip-bg: #0f172a;
+  --tip-text: #f1f5f9;
+  --tip-border: #0f172a;
+  --hot: #ef4444;
+  --cold: #0ea5e9;
 
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23, 42, 0.12);
@@ -56,6 +61,11 @@
   --err-border: #5f1d24;
   --err-text: #fca5a5;
   --info-bg: #151b26;
+  --tip-bg: #232b38;
+  --tip-text: #e6eaf0;
+  --tip-border: #2f3846;
+  --hot: #f87171;
+  --cold: #38bdf8;
 
   --shadow-sm: none;
   --shadow: 0 12px 32px -16px rgba(0, 0, 0, 0.6);
@@ -293,9 +303,32 @@ input.title-input:focus {
   top: calc(var(--tabbar-h) + 16px);
   max-height: calc(100dvh - var(--tabbar-h) - 32px);
   overflow-y: auto;
-  overscroll-behavior: contain;
   scrollbar-width: thin;
   border-radius: var(--radius);
+}
+/* fade the bottom edge while the result panel has more to scroll */
+@property --aside-fade {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@supports (animation-timeline: scroll()) {
+  .aside {
+    mask-image: linear-gradient(to bottom, #000 calc(100% - var(--aside-fade)), transparent);
+    animation: aside-fade linear both;
+    animation-timeline: scroll(self);
+  }
+}
+@keyframes aside-fade {
+  from {
+    --aside-fade: 56px;
+  }
+  95% {
+    --aside-fade: 56px;
+  }
+  to {
+    --aside-fade: 0px;
+  }
 }
 .section {
   margin-top: 20px;
@@ -367,6 +400,8 @@ input.title-input:focus {
   display: grid;
   gap: 14px 16px;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  /* labels may wrap to two lines; keep the inputs of a row on one line */
+  align-items: end;
 }
 .field {
   display: flex;
@@ -374,18 +409,191 @@ input.title-input:focus {
   gap: 6px;
   min-width: 0;
 }
-.field > label {
+.field-head {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 6px;
   font-size: 12.5px;
   font-weight: 500;
+  line-height: 1.35;
   color: var(--text-2);
 }
-.field > label span {
+.field-head label {
+  min-width: 0;
+}
+.field-head .auto-link {
+  margin-left: auto;
+}
+
+.help {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 0.5px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: help;
+}
+.help:hover,
+.help:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  outline: none;
+}
+.tooltip {
+  position: fixed;
+  z-index: 60;
+  padding: 9px 11px;
+  border: 1px solid var(--tip-border);
+  border-radius: 9px;
+  background: var(--tip-bg);
+  color: var(--tip-text);
+  box-shadow: var(--shadow);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  pointer-events: none;
+}
+.intro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px 12px 10px 14px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--text-2);
+  font-size: 13px;
+}
+.intro p {
+  flex: 1;
+  margin: 0;
+}
+.intro svg {
+  flex: none;
+  color: var(--accent-ink);
+}
+
+.schematic {
+  display: block;
+  width: 100%;
+  max-width: 540px;
+  height: auto;
+  margin: 0 auto;
+  font-size: 11px;
+}
+/* on phones the drawing keeps a readable size and scrolls sideways, like the tables */
+.schematic-wrap {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+@media (max-width: 520px) {
+  .schematic {
+    min-width: 440px;
+  }
+}
+.schematic text {
+  fill: var(--text-2);
+}
+.schematic .num {
+  font-variant-numeric: tabular-nums;
+}
+.schematic .name {
+  fill: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.schematic .part-name {
+  fill: var(--text);
+  font-weight: 600;
+}
+.schematic .dim {
+  fill: var(--muted);
+}
+.schematic .line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.schematic .line.thin {
+  stroke-width: 1.5;
+}
+.schematic .hot {
+  stroke: var(--hot);
+}
+.schematic .cold {
+  stroke: var(--cold);
+}
+.schematic .box {
+  stroke-width: 1.5;
+}
+.schematic .box.hot {
+  fill: color-mix(in srgb, var(--hot) 9%, var(--surface));
+}
+.schematic .box.cold {
+  fill: color-mix(in srgb, var(--cold) 9%, var(--surface));
+}
+.schematic .part {
+  fill: var(--surface);
+  stroke: var(--text-2);
+  stroke-width: 1.5;
+}
+.schematic text.tag {
+  stroke: none;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.schematic text.tag.hot {
+  fill: var(--hot);
+}
+.schematic text.tag.cold {
+  fill: var(--cold);
+}
+.schematic .pt circle {
+  fill: var(--text);
+}
+.schematic .pt text {
+  fill: var(--bg);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.schematic .code {
+  font-weight: 700;
+}
+.schematic .node {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.schematic .fin {
+  stroke: var(--cold);
+  stroke-width: 1.5;
+}
+.schematic .room {
+  fill: var(--subtle);
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+.schematic .off {
+  opacity: 0.3;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-  text-overflow: ellipsis;
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 
@@ -474,17 +682,16 @@ input::placeholder {
 .check {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   height: 38px;
   font-size: 13.5px;
   color: var(--text-2);
-  cursor: pointer;
 }
-.field > .check {
-  justify-content: flex-start;
+.check label {
+  display: flex;
   align-items: center;
-  font-size: 13.5px;
-  font-weight: 400;
+  gap: 10px;
+  cursor: pointer;
 }
 .check input {
   width: 18px;
